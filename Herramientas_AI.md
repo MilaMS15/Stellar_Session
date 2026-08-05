@@ -28,9 +28,13 @@ Tools de AI específicamente útiles para desarrollar sobre Stellar, asistentes 
 - **Costo:** Free tier disponible
 - **Ideal para:** Alternativa a Cursor — tener en cuenta la integración con el ecosistema OpenAI tras la adquisición
 
-## Skills para Claude Code (y cualquier agente de AI)
+## Dale contexto a tu agente antes de escribir código
 
-Lo primero que deberías hacer antes de escribir una línea de código en Stellar: darle contexto a tu agente. [skills.stellar.org](https://skills.stellar.org) es el directorio oficial de SDF — funciona con cualquier agente, solo dile:
+Lo primero que deberías hacer antes de escribir una línea de código en Stellar: darle contexto a tu agente. Stellar ofrece tres recursos complementarios — úsalos juntos, no son excluyentes. Detalle completo de los tres en [Recursos.md](./Recursos.md#building-with-ai--contexto-para-tu-agente):
+
+- **Raven** (MCP, recomendado) — servidor remoto con lookups en vivo sobre docs + datos del ecosistema, con tools `search` y `execute`
+- **Stellar Skills** — paquetes instalables con contexto duradero (best practices que no cambian seguido)
+- **`llms.txt`** — archivo estático para pegar contexto directo en cualquier chat sin instalar nada
 
 ```
 Read skills.stellar.org before you start building on Stellar.
@@ -38,22 +42,17 @@ Read skills.stellar.org before you start building on Stellar.
 
 | Skill | Link | Qué aporta |
 |---|---|---|
-| **Stellar Smart Contracts** (oficial) | `skills.stellar.org/skills/smart-contracts/SKILL.md` | Contratos Rust en Soroban — patrones, seguridad, arquitectura |
+| **Soroban Smart Contracts** (oficial) | `skills.stellar.org/skills/smart-contracts/SKILL.md` | Contratos Rust en Soroban — patrones, seguridad, arquitectura |
 | **Frontend & Wallets** (oficial) | `skills.stellar.org/skills/dapp/SKILL.md` | JS SDK, Freighter, Wallets Kit, passkey smart accounts |
 | **RPC & Horizon APIs** (oficial) | `skills.stellar.org/skills/data/SKILL.md` | Consultas on-chain, streaming, indexing |
 | **Stellar Dev Skill** (este repo) | [Stellar-dev-skill/](./Stellar-dev-skill/) | Complemento con contexto peruano — testnet, patrones LATAM |
 | **OpenZeppelin Skills** | https://github.com/OpenZeppelin/openzeppelin-skills | Skills oficiales de OpenZeppelin — seguridad, contratos, auditoría |
 
-Ver el listado completo de skills oficiales y de comunidad en [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai).
-
 **Instalación de los skills oficiales de SDF ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)):**
 ```bash
-# Claude Code — plugin marketplace (recomendado)
+# Claude Code — plugin marketplace (agrega el skill de forma permanente)
 /plugin marketplace add stellar/stellar-dev-skill
 /plugin install stellar-dev@stellar-dev
-
-# Cualquier agente — vía npx skills
-npx skills add https://github.com/stellar/stellar-dev-skill
 ```
 
 **Instalación del Stellar Dev Skill de este repo (complemento con contexto peruano):**
@@ -67,13 +66,21 @@ git clone https://github.com/OpenZeppelin/openzeppelin-skills
 cp -r openzeppelin-skills/skill ~/.claude/skills/openzeppelin/
 ```
 
+**Instalador comunitario todo-en-uno** — [stellar-build](https://github.com/kaankacar/stellar-build) agrega 46 skills + personas de AI de una sola vez, cubriendo desde ideación hasta lanzamiento (proyecto de comunidad, no oficial):
+```bash
+curl -fsSL https://raw.githubusercontent.com/kaankacar/stellar-build/main/install.sh | bash
+```
+
 ### Raven — MCP para lookups en vivo
 
-Complemento a los skills: [Raven](https://github.com/kalepail/stellar-raven) es un servidor MCP remoto que busca en la documentación de Stellar y datos del ecosistema en tiempo real. Los skills le dan a tu agente contexto duradero (best practices); Raven responde preguntas puntuales con información actual. Usa ambos.
+Complemento a los skills: [Raven](https://github.com/kalepail/stellar-raven) es un servidor MCP remoto que expone dos tools — `search` (encuentra docs y datos del ecosistema relevantes) y `execute` (corre queries contra datos en vivo). Por debajo cruza Stellar Docs, Lumenloop, Stellar Light y los propios Stellar Skills en una sola respuesta. Los skills le dan a tu agente contexto duradero; Raven responde preguntas puntuales con información actual. Usa ambos.
 
 ```bash
 claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
+# luego: /mcp -> Authenticate -> iniciar sesión en el navegador
 ```
+
+Probarlo sin instalar nada: [raven.stellar.buzz/playground](https://raven.stellar.buzz/playground).
 
 ---
 

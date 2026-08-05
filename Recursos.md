@@ -4,52 +4,86 @@ Repos de referencia, documentación y herramientas útiles para construir en Ste
 
 ---
 
-## Stellar Skills — contexto para tu agente de AI
+## Building with AI — contexto para tu agente
 
-[skills.stellar.org](https://skills.stellar.org) es el directorio oficial de Stellar Development Foundation con skills modulares para que cualquier agente de AI (Claude Code, Cursor, etc.) tenga contexto actualizado de Stellar antes de escribir código. Funciona con cualquier agente — solo dile:
+Stellar ofrece tres recursos complementarios para que un asistente de AI o LLM entienda el ecosistema antes de escribir código. No son excluyentes — úsalos juntos:
+
+| Recurso | Qué es | Cuándo pesa más |
+|---|---|---|
+| **Raven** (MCP) | Servidor remoto en vivo — busca en docs + datos del ecosistema en tiempo real | Preguntas puntuales, datos que cambian seguido |
+| **Stellar Skills** | Paquetes instalables con contexto duradero (best practices) | Contexto persistente en cada sesión de tu agente |
+| **`llms.txt`** | Archivo estático con el mapa de la documentación, pensado para LLMs | Pegar contexto directo en un chat sin instalar nada |
+
+### Raven — MCP con lookups en vivo (recomendado)
+
+[Raven](https://github.com/kalepail/stellar-raven) es un servidor MCP remoto hosteado en `raven.stellar.buzz`. Conectas tu agente una vez y accede a docs de Stellar + datos del ecosistema en vivo, cruzados en una sola respuesta. Por debajo envuelve Stellar Docs (vía Algolia), Lumenloop, Stellar Light, y los propios Stellar Skills — así que tu agente recibe una respuesta ya cruzada en vez de varias fuentes sueltas.
+
+Expone dos tools MCP:
+- **`search`** — encuentra docs y datos del ecosistema relevantes
+- **`execute`** — corre queries contra datos del ecosistema en vivo
+
+```bash
+# Claude Code
+claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
+# luego: /mcp -> Authenticate -> iniciar sesión en el navegador (OAuth vía WorkOS)
+```
+
+Para Codex, VS Code, Cursor, Claude Desktop y otros clientes MCP, ver las instrucciones específicas en [raven.stellar.buzz](https://raven.stellar.buzz).
+
+**Probarlo sin instalar nada:** [raven.stellar.buzz/playground](https://raven.stellar.buzz/playground) es un chat en el navegador que muestra el trace en vivo — qué tools corrió y qué fuentes usó para cada respuesta — antes de que conectes Raven a tu propio agente (requiere sign-in, sin API keys de servicio).
+
+### Stellar Skills — contexto duradero instalable
+
+[skills.stellar.org](https://skills.stellar.org) es el directorio oficial de SDF con skills modulares para que cualquier agente de AI (Claude Code, Cursor, etc.) tenga contexto actualizado de Stellar antes de escribir código. Funciona con cualquier agente — solo dile:
 
 ```
 Read skills.stellar.org before you start building on Stellar.
 ```
 
-### Skills oficiales
+#### Skills oficiales
 
 | Skill | Link | Cubre |
 |---|---|---|
-| **Stellar Smart Contracts** | `skills.stellar.org/skills/smart-contracts/SKILL.md` | Escribir, testear, asegurar y deployar contratos Rust en Soroban — patrones, errores comunes, arquitectura |
+| **Soroban Smart Contracts** | `skills.stellar.org/skills/smart-contracts/SKILL.md` | Escribir, testear, asegurar y deployar contratos Rust en Soroban |
 | **Frontend & Wallets** | `skills.stellar.org/skills/dapp/SKILL.md` | dApps con JS SDK, Freighter, Wallets Kit, passkey smart accounts |
 | **Stellar Assets & SAC** | `skills.stellar.org/skills/assets/SKILL.md` | Activos clásicos, trustlines, y el puente SAC para interop con contratos |
-| **RPC & Horizon APIs** | `skills.stellar.org/skills/data/SKILL.md` | Consultar datos on-chain con RPC (preferido) y Horizon (legacy) — streaming, indexing, migración |
-| **Agent Payments (x402 + MPP)** | `skills.stellar.org/skills/agentic-payments/SKILL.md` | Cobrar a agentes de AI por llamadas API con paywalls x402 o canales de pago MPP |
-| **ZK Proofs** | `skills.stellar.org/skills/zk-proofs/SKILL.md` | Verificar pruebas Groth16 on-chain vía BLS12-381 — Circom, Noir, RISC Zero |
-| **SEPs, CAPs & Ecosystem** | `skills.stellar.org/skills/standards/SKILL.md` | Elegir el SEP/CAP correcto, proyectos del ecosistema, links de referencia, MCPs |
+| **RPC & Horizon APIs** | `skills.stellar.org/skills/data/SKILL.md` | Consultar datos on-chain con RPC (preferido) y Horizon (legacy) |
+| **Agent Payments** | `skills.stellar.org/skills/agentic-payments/SKILL.md` | Monetizar APIs de AI con x402 y Machine Payments Protocol (MPP) |
+| **ZK Proofs** | `skills.stellar.org/skills/zk-proofs/SKILL.md` | Verificar pruebas zero-knowledge on-chain |
+| **SEPs, CAPs & Ecosystem** | `skills.stellar.org/skills/standards/SKILL.md` | Estándares y guía de integración con el ecosistema |
 
-Estos skills viven en el repo [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill) (Apache-2.0), mantenido por SDF. Formas de instalar:
+Estos skills son open source y viven en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill) (Apache-2.0), mantenido por SDF.
 
 ```bash
-# Claude Code — vía plugin marketplace (recomendado)
+# Claude Code — vía plugin marketplace (agrega el skill de forma permanente)
 /plugin marketplace add stellar/stellar-dev-skill
 /plugin install stellar-dev@stellar-dev
 
-# Cualquier agente compatible con Agent Skills — vía npx skills
-npx skills add https://github.com/stellar/stellar-dev-skill
-
 # Manual — clonar y copiar el directorio skills/ a la ruta de tu agente
 git clone https://github.com/stellar/stellar-dev-skill
-# Claude Code:  ~/.claude/skills/
-# OpenCode:     ~/.config/opencode/skill/
-# OpenAI Codex: ~/.codex/skills/
 ```
 
-### Raven — MCP para lookups en vivo
+| Agente | Directorio de skills |
+|---|---|
+| Claude Code | `~/.claude/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| OpenAI Codex | `~/.codex/skills/` |
 
-[Raven](https://github.com/kalepail/stellar-raven) es un servidor MCP remoto que complementa los skills: mientras los skills le dan a tu agente contexto duradero (best practices que no cambian seguido), Raven busca en la documentación de Stellar y datos del ecosistema en tiempo real, y cruza todo en una sola respuesta. Usa ambos juntos.
+Para Cursor, Windsurf o Aider, la comunidad mantiene [OpenSkills CLI](https://github.com/BuildAgentHQ/openskills) para llevar el estándar Agent Skills a más herramientas — es un proyecto de terceros, no oficial de Stellar, revisa el repo antes de usarlo.
+
+#### `stellar-build` — instalador comunitario todo-en-uno
+
+Para un enfoque más guiado, [stellar-build](https://github.com/kaankacar/stellar-build) agrega **46 skills más un set de personas de AI** a Claude Code o Codex con un solo comando — acompaña todo el recorrido, no solo construir: ideación, validación y lanzamiento.
 
 ```bash
-claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
+curl -fsSL https://raw.githubusercontent.com/kaankacar/stellar-build/main/install.sh | bash
 ```
 
-También hay un [playground en el navegador](https://raven.stellar.buzz) para probarlo sin instalar nada (requiere sign-in).
+> Es un proyecto de comunidad — igual que los demás skills de comunidad, revisa el código antes de instalarlo.
+
+### `llms.txt` — contexto estático para pegar en cualquier chat
+
+[`llms.txt`](https://developers.stellar.org/llms.txt) es un archivo estandarizado con un resumen estructurado de la documentación de Stellar, optimizado para que un LLM lo lea. Útil cuando tu herramienta no soporta MCP ni skills instalables: agrégalo a la configuración de contexto de tu agente, o pega su contenido directo en la conversación. ChatGPT, Claude, Gemini y Cursor soportan agregar contexto custom así desde su configuración.
 
 > Nuestro propio [Stellar-dev-skill/](./Stellar-dev-skill/) sigue disponible como complemento con contexto peruano — instálalo junto a los skills oficiales, no en su reemplazo. Ver [Herramientas_AI.md](./Herramientas_AI.md) para detalles.
 

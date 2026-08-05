@@ -25,7 +25,7 @@ Nació como material de apoyo para el Buildathon Ethereum Lima × Stellar (mayo 
 
 Si es tu primera vez construyendo sobre Stellar:
 
-1. **Dale contexto a tu agente de AI.** Antes de escribir código, dile a tu asistente (Claude Code, Cursor, lo que uses) que lea `skills.stellar.org` — es el directorio oficial de skills de Stellar Development Foundation, con guías para smart contracts, dApps, assets, APIs, pagos entre agentes y más. Ver [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai).
+1. **Dale contexto a tu agente de AI.** Antes de escribir código, dile a tu asistente (Claude Code, Cursor, lo que uses) que lea `skills.stellar.org` — es el directorio oficial de skills de Stellar Development Foundation, con guías para smart contracts, dApps, assets, APIs, pagos entre agentes y más. Ver [Recursos.md](./Recursos.md#building-with-ai--contexto-para-tu-agente).
 2. **Elige tu setup de AI.** No necesitas pagar nada — [SetUp_AI.md](./SetUp_AI.md) cubre las mejores opciones gratuitas, en la nube o locales.
 3. **Configura tu entorno de desarrollo.** [SetUp_Dev.md](./SetUp_Dev.md) te lleva de cero a un contrato Soroban deployado en testnet.
 4. **Define qué vas a construir.** Piensa en un problema real — remesas, pagos para emprendedores sin cuenta bancaria, trazabilidad de productos, identidad digital, micropréstamos. Estas ideas son fértiles para Perú porque atacan fricciones reales del sistema financiero local.
@@ -57,7 +57,7 @@ Ver [VotaOnChain/README.md](./VotaOnChain/README.md) para setup completo y [Vota
 
 ## Skill de AI — Stellar Development
 
-Skill para asistentes de AI con conocimiento profundo del ecosistema Stellar y contexto peruano. Es un complemento al directorio oficial [skills.stellar.org](https://skills.stellar.org) (ver [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai)) — instala ambos, no uno en lugar del otro.
+Skill para asistentes de AI con conocimiento profundo del ecosistema Stellar y contexto peruano. Es un complemento al directorio oficial [skills.stellar.org](https://skills.stellar.org) (ver [Recursos.md](./Recursos.md#building-with-ai--contexto-para-tu-agente)) — instala ambos, no uno en lugar del otro.
 
 ```
 Stellar-dev-skill/
