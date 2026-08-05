@@ -123,6 +123,18 @@ curl -fsSL https://raw.githubusercontent.com/kaankacar/stellar-build/main/instal
 
 ---
 
+## Financiamiento y programas de Stellar
+
+| Recurso | Link | Para qué |
+|---|---|---|
+| **Stellar Community Fund (SCF)** | https://communityfund.stellar.org/ | Grants para proyectos del ecosistema — hasta $150K USD por ronda |
+| **SCF Handbook** | https://stellar.gitbook.io/scf-handbook | Guía oficial para postular al SCF — criterios de evaluación, rondas, proceso paso a paso |
+| **Ambassador Program** | https://stellar.gitbook.io/ambassador-program | Programa de embajadores de Stellar — cómo participar y qué beneficios da |
+
+> Si ya tienes un MVP funcionando, el SCF es el siguiente paso natural para conseguir financiamiento y seguir construyendo — revisa el handbook antes de postular para entender los criterios de evaluación.
+
+---
+
 ## Protocolos DeFi en Stellar
 
 ### Blend Protocol — Lending/Borrowing

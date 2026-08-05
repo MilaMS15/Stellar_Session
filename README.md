@@ -115,6 +115,12 @@ Nació como material de apoyo para el **Buildathon Ethereum Lima × Stellar** �
 
 ---
 
+## Comunidad
+
+¿Preguntas, dudas, o querés conectar con otros builders de Stellar en Perú? Únete al [grupo de WhatsApp](https://chat.whatsapp.com/JB5clEPH9uK2iwzeHkMPOJ).
+
+---
+
 ## Contribuir
 
 Si encuentras un error o quieres agregar algo, abre un issue o un PR. Esta guía es por y para la comunidad.
