@@ -155,7 +155,7 @@ VITE_CONTRACT_ID=TU_CONTRACT_ID_DE_TESTNET
 VITE_DATABASE_URL=postgresql://usuario:password@ep-xxxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
 ```
 
-> **Nota:** En producción nunca expongas la connection string en el frontend. Para una demo de hackathon es aceptable — si quieres más seguridad, agrega una Vercel Function como proxy.
+> **Nota:** En producción nunca expongas la connection string en el frontend. Para una demo o prototipo es aceptable — si quieres más seguridad, agrega una Vercel Function como proxy.
 
 ---
 

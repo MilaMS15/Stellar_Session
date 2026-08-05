@@ -1,6 +1,6 @@
 # Errores comunes y cómo evitarlos
 
-Problemas frecuentes al desarrollar en Stellar y Soroban, con sus soluciones.
+Problemas frecuentes al desarrollar en Stellar, con sus soluciones.
 
 ---
 
@@ -8,95 +8,63 @@ Problemas frecuentes al desarrollar en Stellar y Soroban, con sus soluciones.
 
 ### `tx_bad_seq` — Sequence number incorrecto
 
-**Problema:** La transacción tiene un sequence number que no corresponde al estado actual de la cuenta.
-
 ```typescript
 // MAL — reutilizar la misma cuenta cargada para múltiples txs seguidas
 const cuenta = await rpc.getAccount(publicKey);
-const tx1 = new TransactionBuilder(cuenta, ...).build();
-const tx2 = new TransactionBuilder(cuenta, ...).build(); // mismo sequence!
+const tx1 = new StellarSdk.TransactionBuilder(cuenta, ...).build();
+const tx2 = new StellarSdk.TransactionBuilder(cuenta, ...).build(); // mismo sequence!
 
 // BIEN — recargar la cuenta antes de cada transacción
 const cuenta1 = await rpc.getAccount(publicKey);
-const tx1 = new TransactionBuilder(cuenta1, ...).build();
+const tx1 = new StellarSdk.TransactionBuilder(cuenta1, ...).build();
 await enviarYEsperar(tx1);
-
 const cuenta2 = await rpc.getAccount(publicKey); // recargar
-const tx2 = new TransactionBuilder(cuenta2, ...).build();
 ```
 
-### `tx_insufficient_fee` — Fee muy bajo
+### `tx_insufficient_fee`
 
 ```typescript
-// MAL — usar BASE_FEE para transacciones Soroban complejas
-const tx = new TransactionBuilder(cuenta, {
-  fee: BASE_FEE, // 100 stroops — puede ser insuficiente para Soroban
-}).build();
+// MAL — BASE_FEE puede ser insuficiente para una transacción de contrato compleja
+const tx = new StellarSdk.TransactionBuilder(cuenta, { fee: StellarSdk.BASE_FEE }).build();
 
 // BIEN — simular primero para obtener el fee real
 const sim = await rpc.simulateTransaction(txSinFee);
-const txConFee = SorobanRpc.assembleTransaction(txSinFee, sim).build();
+const txConFee = StellarSdk.rpc.assembleTransaction(txSinFee, sim).build();
 ```
 
 ### Transacción expirada
 
 ```typescript
-// MAL — timeout demasiado corto o no configurado
-const tx = new TransactionBuilder(cuenta, { fee: BASE_FEE })
-  .addOperation(...)
-  .build(); // sin setTimeout — usa el mínimo por defecto
-
 // BIEN — dar tiempo suficiente para firmar y enviar
-const tx = new TransactionBuilder(cuenta, { fee: BASE_FEE })
-  .addOperation(...)
-  .setTimeout(300) // 5 minutos — suficiente para flujo con wallet
+const tx = new StellarSdk.TransactionBuilder(cuenta, { fee: StellarSdk.BASE_FEE })
+  .addOperation(op)
+  .setTimeout(300) // 5 min — suficiente para flujo con wallet
   .build();
 ```
 
 ---
 
-## Errores de Soroban
+## Errores de contratos
 
 ### Simulación exitosa pero transacción fallida
 
 ```typescript
 // Causa: los datos del ledger cambiaron entre simulación y envío
-// Solución: siempre usar assembleTransaction y enviar rápido
-
 const sim = await rpc.simulateTransaction(tx);
-if (SorobanRpc.Api.isSimulationError(sim)) {
-  throw new Error(sim.error);
-}
+if (StellarSdk.rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
 
 // assembleTransaction actualiza el footprint con los datos de la simulación
-const txFinal = SorobanRpc.assembleTransaction(tx, sim).build();
+const txFinal = StellarSdk.rpc.assembleTransaction(tx, sim).build();
 // Firmar y enviar inmediatamente después
-```
-
-### Contrato no encontrado después de deploy
-
-```bash
-# Problema: el deploy tardó más de lo esperado en confirmarse
-# Verificar el estado de la transacción de deploy
-
-soroban tx status <DEPLOY_HASH> --network testnet
-
-# Si está en NOT_FOUND, esperar un poco más
-# Si está en FAILED, ver el error
-
-# Verificar que el contrato existe
-soroban contract info --id <CONTRACT_ID> --network testnet
 ```
 
 ### `require_auth` falla en tests
 
 ```rust
-// Problema: no se configuró mock_all_auths en el entorno de test
-
-// MAL
+// MAL — sin mock de auth
 #[test]
 fn test_transferir() {
-    let env = Env::default(); // sin mock de auth
+    let env = Env::default();
     let client = MiContratoClient::new(&env, &id);
     client.transferir(&usuario, &otro, &100); // FALLA — no hay auth simulada
 }
@@ -105,48 +73,76 @@ fn test_transferir() {
 #[test]
 fn test_transferir() {
     let env = Env::default();
-    env.mock_all_auths(); // simular todas las auth
+    env.mock_all_auths();
     let client = MiContratoClient::new(&env, &id);
-    client.transferir(&usuario, &otro, &100); // funciona
+    client.transferir(&usuario, &otro, &100);
 }
 ```
 
-### Error de TTL — datos expirados
+### Datos expirados por TTL
 
 ```rust
-// Problema: datos persistent sin TTL extendido expiran después de ~1 semana en testnet
-
-// BIEN — extender TTL al escribir
+// BIEN — extender TTL al escribir (threshold, extend_to — no min/max)
 pub fn actualizar_posicion(env: Env, usuario: Address, monto: i128) {
     usuario.require_auth();
     let clave = Clave::Posicion(usuario);
     env.storage().persistent().set(&clave, &monto);
-    // Extender TTL: min 50000 ledgers (~7 días), max 100000 ledgers (~14 días)
-    env.storage().persistent().extend_ttl(&clave, 50000, 100000);
+    env.storage().persistent().extend_ttl(&clave, 30 * 17280, 120 * 17280);
 }
+```
 
-// También extender el TTL del contrato
-env.storage().instance().extend_ttl(50000, 100000);
+### Usar `soroban_token_sdk::TokenClient`
+
+```rust
+// MAL — este crate no existe en el SDK actual
+use soroban_token_sdk::TokenClient;
+
+// BIEN — el cliente de token vive en el SDK principal
+use soroban_sdk::token::TokenClient;
+```
+
+### Usar `env.events().publish()` en vez de `#[contractevent]`
+
+```rust
+// Funciona pero está deprecado
+env.events().publish((symbol_short!("transfer"), from), (to, amount));
+
+// Preferido — tipado, con topics explícitos
+#[contractevent]
+pub struct Transfer {
+    #[topic] pub from: Address,
+    #[topic] pub to: Address,
+    pub amount: i128,
+}
+Transfer { from, to, amount }.publish(&env);
 ```
 
 ---
 
 ## Errores de SDK JavaScript
 
+### `SorobanRpc` no existe / import falla
+
+```typescript
+// MAL — namespace antiguo (pre SDK v16)
+import { SorobanRpc } from "@stellar/stellar-sdk";
+const rpc = new SorobanRpc.Server(url);
+
+// BIEN
+import * as StellarSdk from "@stellar/stellar-sdk";
+const rpc = new StellarSdk.rpc.Server(url);
+```
+
 ### `Account not found` al cargar cuenta
 
 ```typescript
-// Problema: la cuenta no está fondeada o no existe en la red
-
-// Verificar si existe primero
 async function verificarOCrearCuenta(publicKey: string) {
   try {
     await rpc.getAccount(publicKey);
-  } catch (e) {
-    if (e.message.includes('Not Found')) {
-      // En testnet, fondear con Friendbot
-      await fetch(`https://friendbot.stellar.org?addr=${publicKey}`);
-      await new Promise(r => setTimeout(r, 2000)); // esperar confirmación
+  } catch (e: any) {
+    if (e.message?.includes("Not Found")) {
+      await fetch(`https://friendbot.stellar.org?addr=${publicKey}`); // solo testnet
+      await new Promise(r => setTimeout(r, 2000));
     } else {
       throw e;
     }
@@ -154,181 +150,126 @@ async function verificarOCrearCuenta(publicKey: string) {
 }
 ```
 
-### El resultado de `scValToNative` es incorrecto
+### `getPublicKey()` de Freighter no existe / deprecado
 
 ```typescript
-// Problema: el tipo de ScVal no coincide con lo esperado
+// MAL — deprecado
+const { publicKey } = await freighter.getPublicKey();
 
-import { scValToNative, xdr } from '@stellar/stellar-sdk';
-
-// Verificar el tipo antes de convertir
-const retval = sim.result?.retval;
-if (retval) {
-  console.log('Tipo de ScVal:', retval.switch().name);
-  const valor = scValToNative(retval);
-  console.log('Valor nativo:', valor);
-}
-
-// Tipos comunes:
-// scvI128 → bigint
-// scvU32 → number
-// scvBool → boolean
-// scvAddress → string (StrKey)
-// scvMap → object
-// scvVec → array
+// BIEN
+import { getAddress } from "@stellar/freighter-api";
+const { address } = await getAddress();
 ```
 
-### Freighter no detectado en el navegador
+### Stellar Wallets Kit — mezclar v1 y v2
 
 ```typescript
-// Problema: Freighter no está instalado o el script cargó antes que la extensión
+// MAL — API v1 (npm, con punto, instanciada)
+import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
+const kit = new StellarWalletsKit({ ... });
+await kit.openModal({ onWalletSelected: ... });
 
-// BIEN — verificar después de que la página cargue
-useEffect(() => {
-  const verificar = async () => {
-    // Esperar un momento para que las extensiones inicialicen
-    await new Promise(r => setTimeout(r, 100));
-    const conectado = await freighter.isConnected();
-    setFreighterDisponible(conectado.isConnected);
-  };
-  verificar();
-}, []);
+// BIEN — API v2 (JSR, con guion, estática)
+import { StellarWalletsKit, Networks } from "@creit-tech/stellar-wallets-kit";
+import { defaultModules } from "@creit-tech/stellar-wallets-kit/modules/utils";
+StellarWalletsKit.init({ modules: defaultModules(), network: Networks.TESTNET });
+const { address } = await StellarWalletsKit.authModal();
+```
+
+### El resultado de `scValToNative` es un BigInt inesperado
+
+```typescript
+// i128 en Soroban se recibe como BigInt en JS, no como number
+const resultado = StellarSdk.scValToNative(retval); // 1000n, no 1000
+const numero = Number(resultado); // convertir explícitamente si necesitas number
 ```
 
 ---
 
 ## Errores de compilación Rust
 
-### `wasm32-unknown-unknown` no instalado
+### Target incorrecto
 
 ```bash
 # Error: error[E0463]: can't find crate for `std`
-# Solución:
+# MAL — target viejo
 rustup target add wasm32-unknown-unknown
+
+# BIEN — el único target que soporta el runtime de Stellar hoy (Rust >= 1.84)
+rustup target add wasm32v1-none
 ```
 
 ### Contrato demasiado grande
 
 ```bash
-# Error: WasmDeploymentSizeTooBig — el WASM supera el límite (64 KB ~ 100 KB)
-# Soluciones:
+# El límite real es 128 KB, no 64 KB
+ls -la target/wasm32v1-none/release/*.wasm
 
-# 1. Verificar el tamaño
-ls -la target/wasm32-unknown-unknown/release/*.wasm
+# stellar contract build ya optimiza por defecto
+stellar contract build
 
-# 2. Compilar con optimizaciones
-soroban contract build  # usa --release automáticamente
-
-# 3. Optimizar con wasm-opt
-cargo install wasm-opt
-wasm-opt -Oz \
-  target/wasm32-unknown-unknown/release/mi_contrato.wasm \
-  -o optimizado.wasm
-
-# 4. Reducir dependencias en Cargo.toml
-# Usar features mínimas de soroban-sdk
-
-# 5. Eliminar código muerto
-cargo build --target wasm32-unknown-unknown --release 2>&1 | grep "unused"
+cargo install cargo-bloat
+cargo bloat --release --target wasm32v1-none  # encontrar dependencias pesadas
 ```
 
-### Error de no_std
+### Error de `no_std`
 
 ```rust
-// Error: cannot find macro `println` in this scope
-// Los contratos Soroban usan #![no_std], sin acceso a std::
-
 // MAL — no disponible en no_std
 println!("Debug: {}", valor);
 
-// BIEN — usar eventos para logging
-env.events().publish((symbol_short!("debug"),), valor);
-
-// O usar el macro de Soroban SDK en tests
+// BIEN — usar eventos para diagnóstico on-chain, o std solo en tests
 #[cfg(test)]
-use std::println; // solo en tests se puede usar std
+extern crate std;
 ```
 
 ---
 
 ## Errores de configuración y red
 
+### CLI `soroban` no reconocido
+
+```bash
+# El CLI "soroban" es obsoleto — usa "stellar" para todo
+# MAL
+soroban contract deploy ...
+# BIEN
+stellar contract deploy ...
+```
+
 ### Passphrase de red incorrecta
 
 ```typescript
-// Error: tx_bad_auth — firma inválida porque la passphrase no coincide
-
-// BIEN — verificar passphrase según la red
 const NETWORK_PASSPHRASE = {
-  testnet: 'Test SDF Network ; September 2015',
-  mainnet: 'Public Global Stellar Network ; September 2015',
-  local: 'Standalone Network ; February 2017',
-  futurenet: 'Test SDF Future Network ; October 2022',
+  testnet: "Test SDF Network ; September 2015",
+  mainnet: "Public Global Stellar Network ; September 2015",
+  local: "Standalone Network ; February 2017",
+  futurenet: "Test SDF Future Network ; October 2022",
 };
-
-// En TransactionBuilder
-const tx = new TransactionBuilder(cuenta, {
-  fee: BASE_FEE,
-  networkPassphrase: NETWORK_PASSPHRASE.testnet, // NO hardcodear en producción
-}).build();
 ```
 
-### RPC timeout en Quickstart local
+### URL de RPC mainnet inventada
 
-```bash
-# Problema: el Docker de Quickstart tarda en inicializar
+```typescript
+// MAL — este endpoint no existe
+const rpc = new StellarSdk.rpc.Server("https://soroban-mainnet.stellar.org");
 
-# Verificar que está listo
-curl http://localhost:8000/health
-
-# Esperar hasta que responda 200
-until curl -s http://localhost:8000/health | grep -q '"status":"healthy"'; do
-  sleep 2
-  echo "Esperando que Quickstart inicialice..."
-done
-echo "Quickstart listo!"
+// BIEN — usar un proveedor (ver directorio de RPC providers)
+const rpc = new StellarSdk.rpc.Server(process.env.NEXT_PUBLIC_STELLAR_MAINNET_RPC_URL!);
 ```
 
 ---
 
-## Gotchas de Soroban que sorprenden
+## Gotchas que sorprenden
 
-### Los tipos se serializan diferente de lo esperado
+### `address.require_auth()` con sub-invocaciones
 
-```rust
-// i128 en Soroban se serializa como ScVal::ScvI128
-// En JavaScript se recibe como BigInt, no como number
+Si tu contrato llama a otro contrato que a su vez hace `require_auth` del mismo usuario, la auth del usuario debe abarcar toda la cadena de llamadas — un árbol, no una llamada aislada. El SDK JS arma el árbol automáticamente desde la simulación, pero si tu contrato hace una llamada *más profunda* que la directa, debe pre-autorizarla con `authorize_as_current_contract`.
 
-// TypeScript
-const resultado = scValToNative(retval); // es BigInt
-console.log(resultado); // 1000n (no 1000)
-const numero = Number(resultado); // convertir si necesitas number
-```
+### Anyone puede extender el TTL de tu contrato
 
-### address.require_auth() con sub-invocaciones
+`ExtendFootprintTTLOp` no requiere auth del contrato — es una feature (permite servicios de keep-alive benévolos), pero significa que el TTL nunca es un mecanismo de seguridad.
 
-```rust
-// Si tu contrato llama a otro contrato que a su vez hace require_auth
-// del mismo usuario, la auth del usuario debe abarcar toda la cadena
+### Storage tras un upgrade
 
-// El usuario debe firmar una auth que incluya la sub-invocación
-// Esto se maneja automáticamente con assembleTransaction en el SDK JS
-```
-
-### Storage persistent vs instance en upgrades
-
-```rust
-// Después de un upgrade, el instance storage se mantiene
-// pero los datos persistent de la versión anterior siguen accesibles
-
-// Si cambias el esquema de datos en un upgrade, migrar explícitamente:
-pub fn migrar_v2(env: Env) {
-    let admin: Address = env.storage().instance().get(&Clave::Admin).unwrap();
-    admin.require_auth();
-    
-    // Migrar datos del formato v1 al formato v2
-    // ...
-    
-    env.storage().instance().set(&Clave::Version, &2_u32);
-}
-```
+Después de un upgrade, el storage existente persiste tal cual — el nuevo WASM lo reinterpreta. Si cambias el esquema de datos, migra explícitamente con un entrypoint `migrate` gateado por versión, nunca asumas que el nuevo código puede leer datos con una forma distinta sin más.

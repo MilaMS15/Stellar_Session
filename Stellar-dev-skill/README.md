@@ -2,9 +2,9 @@
 
 Skill de AI para desarrollo moderno en Stellar, con mejores prácticas actuales.
 
-Traducción y adaptación al español de [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill), con ejemplos y contexto relevante para Perú y LATAM.
+Inspirado originalmente en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill), con ejemplos y contexto relevante para Perú y LATAM. Ese repo ha evolucionado bastante desde entonces — hoy es la fuente oficial de [skills.stellar.org](https://skills.stellar.org), con una estructura distinta (`skills/` modular por tema: smart-contracts, dapp, assets, data, agentic-payments, zk-proofs, standards) e instalación vía plugin marketplace de Claude Code. Si buscas el contenido más actualizado y mantenido por SDF, instala ese directamente — ver [Recursos.md](../Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai) en la raíz de este repo. Este skill sigue vivo como complemento con contexto peruano, no como espejo del oficial.
 
-> **Nota:** Este skill forma parte de [Stellar Build PE](https://github.com/Stellar-Build-PE) — guía comunitaria para el Buildathon × Stellar.
+> **Nota:** Este skill forma parte de [Stellar Build Peru](https://github.com/Stellar-Build-PE) — guía comunitaria para builders de Stellar en Perú.
 
 ---
 
@@ -38,11 +38,13 @@ El skill usa **divulgación progresiva**: `SKILL.md` cubre el 80% de los casos, 
 ```bash
 # Opción 1: Clonar y copiar
 git clone https://github.com/Stellar-Build-PE/Stellar-dev-skill
-cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev/
+cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev-pe/
 
 # Opción 2: Desde este repo (si estás en el proyecto Stellar Build PE)
 # Los archivos ya están en /Stellar-dev-skill/skill/
 ```
+
+> Se instala como `stellar-dev-pe` (no `stellar-dev`) para no chocar con el skill oficial de SDF, que se instala como `stellar-dev` vía `/plugin install stellar-dev@stellar-dev`. Podés tener ambos activos a la vez.
 
 ### Con npx skills
 
@@ -109,7 +111,7 @@ Si encuentras información desactualizada o quieres agregar ejemplos:
 
 ## Créditos
 
-- Basado en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill) (Apache-2.0)
+- Originalmente basado en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill) (Apache-2.0) — hoy la fuente oficial de skills.stellar.org
 - Inspirado en [solana-foundation/solana-dev-skill](https://github.com/solana-foundation/solana-dev-skill)
 - Adaptado para la comunidad que construye en Stellar por [Minted In Peru](https://mintedinpe.com)
 
@@ -121,5 +123,5 @@ Apache-2.0 — ver `LICENSE` para detalles.
 
 ---
 
-> Parte de **Stellar Build PE** — guía comunitaria para el Buildathon Ethereum Lima × Stellar.
+> Parte de **Stellar Build Peru** — guía comunitaria para builders de Stellar en Perú.
 > Hecha con amor para la comunidad peruana Web3.

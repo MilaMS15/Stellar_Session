@@ -1,243 +1,228 @@
 # APIs de Stellar: RPC y Horizon
 
-Guía para consultar datos de la red Stellar usando Stellar RPC (para Soroban) y Horizon (para operaciones clásicas).
+Acceso a datos de la red Stellar. Stellar RPC es el punto de entrada preferido para proyectos nuevos; Horizon queda para legacy e historial. Para historial más allá de la ventana de 7 días de RPC, usar Hubble/Galexie.
 
 ---
 
 ## Cuándo usar cada API
 
-| Tarea | API recomendada | Por qué |
+| API | Estado | Caso de uso |
 |---|---|---|
-| Invocar contratos Soroban | **RPC** | Es la única forma |
-| Simular transacciones Soroban | **RPC** | Incluye fee y datos de retorno |
-| Pagos clásicos XLM/activos | Horizon | Más simple, streaming disponible |
-| Leer saldos de cuentas | Horizon o RPC | Horizon es más conveniente |
-| Historial de transacciones | **Horizon** | RPC no tiene historial |
-| Precio de gas/fee | **RPC** | `getFeeStats` más preciso |
-| Leer estado de contrato | **RPC** | `getLedgerEntries` |
-| Streaming de eventos | **Horizon** | SSE disponible |
+| **Stellar RPC** | Preferido | Contratos, estado en tiempo real, proyectos nuevos |
+| **Horizon** | Legacy-focused | Datos históricos, aplicaciones legacy |
+
+**Recomendación:** usa RPC para todo proyecto nuevo. Usa Horizon principalmente para consultas históricas y compatibilidad legacy.
 
 ---
 
 ## Stellar RPC
 
-### URLs de RPC
+### URLs
 
-| Red | URL |
+> SDF solo provee RPC público directo para Futurenet. Para mainnet, elige un proveedor del [directorio de RPC](https://developers.stellar.org/docs/data/apis/rpc/providers) — **no existe** un endpoint mainnet hosteado por SDF (`soroban-mainnet.stellar.org` no existe).
+
+| Red | RPC URL |
 |---|---|
+| Mainnet | Endpoint de proveedor (ver directorio de RPC) |
 | Testnet | `https://soroban-testnet.stellar.org` |
-| Mainnet | `https://soroban-mainnet.stellar.org` |
+| Futurenet | `https://rpc-futurenet.stellar.org` |
 | Local | `http://localhost:8000/soroban/rpc` |
 
-### Métodos principales del RPC
+### Setup
 
 ```typescript
-import { SorobanRpc } from '@stellar/stellar-sdk';
+import * as StellarSdk from "@stellar/stellar-sdk";
 
-const rpc = new SorobanRpc.Server('https://soroban-testnet.stellar.org');
+const rpc = new StellarSdk.rpc.Server("https://soroban-testnet.stellar.org");
+```
 
-// Obtener información de cuenta
-const cuenta = await rpc.getAccount('G...');
-console.log('Sequence:', cuenta.sequenceNumber());
+> El namespace es `StellarSdk.rpc` (SDK v16+). Código con `SorobanRpc.Server` es de una versión anterior del SDK.
+
+### Métodos principales
+
+```typescript
+// Cuenta (retorna solo lo necesario para construir transacciones)
+const cuenta = await rpc.getAccount("G...");
+
+// Health y ledger actual
+const health = await rpc.getHealth();
+const ledger = await rpc.getLatestLedger();
+
+// Leer storage de contrato
+const key = StellarSdk.xdr.LedgerKey.contractData(
+  new StellarSdk.xdr.LedgerKeyContractData({
+    contract: new StellarSdk.Address(contractId).toScAddress(),
+    key: StellarSdk.xdr.ScVal.scvSymbol("mi_clave"),
+    durability: StellarSdk.xdr.ContractDataDurability.persistent(),
+  })
+);
+const entradas = await rpc.getLedgerEntries(key);
 
 // Simular transacción (sin enviar)
 const sim = await rpc.simulateTransaction(tx);
-if (SorobanRpc.Api.isSimulationError(sim)) {
-  console.error('Error:', sim.error);
-} else {
-  console.log('Fee estimado:', sim.minResourceFee);
-  console.log('Resultado:', sim.result?.retval);
+if (StellarSdk.rpc.Api.isSimulationError(sim)) {
+  console.error("Simulación falló:", sim.error);
+} else if (StellarSdk.rpc.Api.isSimulationSuccess(sim)) {
+  console.log("Costo:", sim.cost, "Resultado:", sim.result);
 }
 
-// Enviar transacción
-const envio = await rpc.sendTransaction(txFirmada);
-console.log('Hash:', envio.hash, 'Estado:', envio.status);
+// Enviar
+const response = await rpc.sendTransaction(signedTransaction);
 
-// Obtener estado de transacción
-const estado = await rpc.getTransaction(hash);
-// estados: SUCCESS | FAILED | NOT_FOUND
-
-// Obtener entradas del ledger (leer estado de contrato)
-const clave = xdr.LedgerKey.contractData(
-  new xdr.LedgerKeyContractData({
-    contract: new Address(CONTRACT_ID).toScAddress(),
-    key: xdr.ScVal.scvSymbol('mi_clave'),
-    durability: xdr.ContractDataDurability.persistent(),
-  })
-);
-const entradas = await rpc.getLedgerEntries(clave);
-console.log('Valor:', scValToNative(entradas.entries[0].val));
-
-// Estadísticas de fees
-const fees = await rpc.getFeeStats();
-console.log('Fee recomendado:', fees.sorobanInclusionFee.p90);
-
-// Estado actual de la red
-const ledger = await rpc.getLatestLedger();
-console.log('Ledger actual:', ledger.sequence);
+// Esperar resultado (usa el poller del SDK, no un while loop manual)
+const result = await rpc.pollTransaction(response.hash);
+// result.status: SUCCESS | FAILED | NOT_FOUND
 ```
 
-### Obtener eventos de contrato
+### Atajos de lectura sin cliente manual
 
 ```typescript
-// Obtener eventos emitidos por un contrato
+// Ejecuta un método de solo lectura y devuelve el resultado ya decodificado —
+// no necesitas armar ScVal a mano ni configurar un contract.Client
+const { result: balance } = await rpc.queryContract<bigint>(tokenId, "balance", { id: "G..." });
+
+// Descubre los métodos invocables de un contrato solo con su ID
+const methods = await rpc.getContractMethods(tokenId);
+```
+
+### Eventos de contrato
+
+```typescript
 const eventos = await rpc.getEvents({
   startLedger: ledger.sequence - 1000,
   filters: [{
-    type: 'contract',
-    contractIds: [CONTRACT_ID],
-    topics: [
-      ['*'], // cualquier topic en posición 0
-    ],
+    type: "contract",
+    contractIds: [contractId],
+    topics: [["*", StellarSdk.xdr.ScVal.scvSymbol("transfer").toXDR("base64")]],
   }],
   limit: 100,
 });
 
 for (const evento of eventos.events) {
-  console.log('Ledger:', evento.ledger);
-  console.log('Topics:', evento.topic.map(scValToNative));
-  console.log('Valor:', scValToNative(evento.value));
+  console.log(evento.ledger, evento.topic.map(StellarSdk.scValToNative), StellarSdk.scValToNative(evento.value));
 }
 ```
+
+### Limitaciones de RPC
+
+- **Historial de 7 días** para la mayoría de métodos (`getTransaction`, `getEvents`, etc.)
+- **Excepción `getLedgers`**: "Infinite Scroll" consulta cualquier ledger hasta génesis vía el data lake
+- **Sin streaming** — hay que hacer polling (no WebSocket)
+- **Enfocado en contratos** — datos limitados de Stellar clásico
 
 ---
 
 ## Horizon API
 
-### URLs de Horizon
+### URLs
 
-| Red | URL |
+| Red | Horizon URL |
 |---|---|
-| Testnet | `https://horizon-testnet.stellar.org` |
 | Mainnet | `https://horizon.stellar.org` |
+| Testnet | `https://horizon-testnet.stellar.org` |
+| Local | `http://localhost:8000` |
 
-### Uso básico con JS SDK
+### Uso básico
 
 ```typescript
-import { Horizon, Asset } from '@stellar/stellar-sdk';
+import * as StellarSdk from "@stellar/stellar-sdk";
 
-const horizon = new Horizon.Server('https://horizon-testnet.stellar.org');
+const horizon = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org");
 
-// Cargar cuenta
-const cuenta = await horizon.loadAccount('G...');
-console.log('Saldos:', cuenta.balances);
+const cuenta = await horizon.loadAccount("G...");
+console.log("Saldos:", cuenta.balances);
 
-// Historial de transacciones
-const txs = await horizon.transactions()
-  .forAccount('G...')
-  .order('desc')
-  .limit(10)
-  .call();
+const txs = await horizon.transactions().forAccount("G...").order("desc").limit(10).call();
 
-for (const tx of txs.records) {
-  console.log('Hash:', tx.hash, 'Fecha:', tx.created_at);
-}
+const pagos = await horizon.payments().forAccount("G...").order("desc").limit(20).call();
 
-// Pagos de una cuenta
-const pagos = await horizon.payments()
-  .forAccount('G...')
-  .order('desc')
-  .limit(20)
-  .call();
-
-// Historial de un activo
-const historial = await horizon.payments()
-  .forAsset(new Asset('USDC', 'G...ISSUER'))
-  .order('desc')
-  .limit(10)
-  .call();
-
-// Order book de par de activos
-const orderbook = await horizon.orderbook(
-  new Asset('USDC', 'G...ISSUER'),
-  Asset.native()
-).call();
-console.log('Ofertas de compra:', orderbook.bids);
-console.log('Ofertas de venta:', orderbook.asks);
+const orderbook = await horizon.orderbook(new StellarSdk.Asset("USDC", "G...ISSUER"), StellarSdk.Asset.native()).call();
 ```
 
-### Streaming con Horizon (SSE)
+### Streaming (Server-Sent Events)
 
 ```typescript
-// Escuchar pagos en tiempo real
-const cerrar = horizon.payments()
-  .forAccount('G...')
-  .cursor('now')
-  .stream({
-    onmessage: (pago) => {
-      console.log('Nuevo pago recibido:', pago);
-    },
-    onerror: (error) => {
-      console.error('Error en stream:', error);
-    },
-  });
+const cerrar = horizon.payments().forAccount("G...").cursor("now").stream({
+  onmessage: (pago) => console.log("Nuevo pago:", pago),
+  onerror: (error) => console.error("Error en stream:", error),
+});
+// cerrar() para detener
+```
 
-// Para detener el stream
-// cerrar();
+### HTTP directo
 
-// Escuchar transacciones en tiempo real
-const cerrarTxStream = horizon.transactions()
-  .forAccount('G...')
-  .cursor('now')
-  .stream({
-    onmessage: (tx) => {
-      console.log('Nueva transacción:', tx.hash);
-    },
-  });
+```bash
+curl https://horizon-testnet.stellar.org/accounts/G...
+curl "https://horizon-testnet.stellar.org/accounts/G.../transactions?order=desc&limit=10"
+curl "https://horizon-testnet.stellar.org/assets?asset_code=USDC&asset_issuer=G..."
+```
+
+### Paginación
+
+```typescript
+let page = await server.transactions().forAccount(publicKey).limit(10).call();
+if (page.records.length > 0) page = await page.next();
+page = await page.prev();
 ```
 
 ---
 
-## Horizon API directa (HTTP)
+## Migración: Horizon → RPC
 
-```bash
-# Estado de una cuenta
-curl https://horizon-testnet.stellar.org/accounts/G...
+```typescript
+// Cuenta
+const account = await rpc.getAccount(publicKey); // retorna menos que loadAccount, suficiente para tx
 
-# Saldos de una cuenta
-curl https://horizon-testnet.stellar.org/accounts/G... | jq '.balances'
+// Envío (Soroban)
+const response = await rpc.sendTransaction(tx);
+const result = await rpc.pollTransaction(response.hash);
 
-# Últimas 10 transacciones
-curl "https://horizon-testnet.stellar.org/accounts/G.../transactions?order=desc&limit=10"
-
-# Información de un activo
-curl "https://horizon-testnet.stellar.org/assets?asset_code=USDC&asset_issuer=G..."
-
-# Estado del ledger actual
-curl https://horizon-testnet.stellar.org/ledgers?order=desc&limit=1
-
-# Paths de pago (para encontrar ruta más barata)
-curl "https://horizon-testnet.stellar.org/paths/strict-send?source_asset_type=native&source_amount=10&destination_account=G..."
+// Streaming — no existe en RPC, hay que hacer polling
+async function pollForUpdates() {
+  const lastLedger = await rpc.getLatestLedger();
+  // consultar eventos/transacciones nuevas
+}
+setInterval(pollForUpdates, 5000);
 ```
+
+---
+
+## Historial más allá de 7 días
+
+- **Hubble** — dataset BigQuery de SDF, actualizado cada 30 min
+- **Galexie** — pipeline de datos self-hosted ([GitHub](https://github.com/stellar/galexie))
+- **Data Lake** — object store en la nube que alimenta "Infinite Scroll" de RPC; acceso público vía `s3://aws-public-blockchain/v1.1/stellar/ledgers/pubnet` (AWS Open Data)
+
+### Indexers de terceros
+
+Para queries complejas, streaming de eventos o pipelines custom:
+
+- **Mercury** — indexer nativo de Stellar, Retroshades, API GraphQL (https://mercurydata.app)
+- **SubQuery** — indexer multi-chain con soporte Stellar (https://subquery.network)
+- **Goldsky** — pipelines de replicación en tiempo real (https://goldsky.com)
+- **StellarExpert API** — REST gratis sin auth para assets, cuentas, ledgers (https://stellar.expert/openapi.html)
 
 ---
 
 ## Manejo de errores
 
 ```typescript
-import { SorobanRpc, Horizon } from '@stellar/stellar-sdk';
-
-// Errores de RPC
+// RPC
 try {
   const resultado = await rpc.sendTransaction(tx);
-  if (resultado.status === 'ERROR') {
-    const xdr = resultado.errorResult;
-    console.error('Error de red:', xdr);
-  }
+  if (resultado.status === "ERROR") console.error("Error de red:", resultado.errorResult);
 } catch (e) {
-  if (e instanceof SorobanRpc.Api.SimulationError) {
-    console.error('Error en simulación:', e.error);
-  }
+  console.error("Error en simulación o envío:", e);
 }
 
-// Errores de Horizon
+// Horizon
 try {
   await horizon.submitTransaction(tx);
 } catch (e: any) {
-  if (e.response?.data?.extras?.result_codes) {
-    const codes = e.response.data.extras.result_codes;
-    console.error('Código de error de transacción:', codes.transaction);
-    console.error('Códigos de error de operaciones:', codes.operations);
+  const codes = e.response?.data?.extras?.result_codes;
+  if (codes) {
+    console.error("Transacción:", codes.transaction);
+    console.error("Operaciones:", codes.operations);
   }
 }
 ```
@@ -255,39 +240,30 @@ try {
 
 ---
 
-## Calcular fees dinámicos
+## Fees dinámicos
 
 ```typescript
-import { SorobanRpc } from '@stellar/stellar-sdk';
-
-async function calcularFeeOptimo(): Promise<string> {
-  const rpc = new SorobanRpc.Server('https://soroban-testnet.stellar.org');
+async function calcularFeeOptimo(rpc: StellarSdk.rpc.Server): Promise<string> {
   const stats = await rpc.getFeeStats();
-  
-  // Usar el percentil 90 para alta probabilidad de inclusión
   const feeRecomendado = parseInt(stats.sorobanInclusionFee.p90);
-  
-  // Agregar 10% de margen
-  return Math.ceil(feeRecomendado * 1.1).toString();
+  return Math.ceil(feeRecomendado * 1.1).toString(); // margen 10%
 }
 
-// Para transacciones clásicas (no Soroban)
+// Para transacciones clásicas
 const fee = (await horizon.fetchBaseFee()).toString();
 ```
 
 ---
 
-## Horizon vs RPC — comparación de respuestas
+## Comparación de respuestas
 
 ```typescript
-// Leer cuenta con Horizon
+// Horizon: id, sequence, balances[], signers[], flags, etc. — más rico
 const cuentaHorizon = await horizon.loadAccount(pubKey);
-// Retorna: id, sequence, balances[], signers[], flags, etc.
 
-// Leer cuenta con RPC
+// RPC: id, sequence — más limitado pero más rápido para contratos
 const cuentaRpc = await rpc.getAccount(pubKey);
-// Retorna: id, sequence — más limitado pero más rápido para Soroban
 
-// Recomendación: para apps que usan solo Soroban, usa RPC para todo.
-// Para apps que mezclan clásico + Soroban, conecta ambas APIs.
+// Apps que solo usan contratos: RPC para todo.
+// Apps que mezclan clásico + contratos: conectar ambas APIs.
 ```

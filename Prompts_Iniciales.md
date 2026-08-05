@@ -89,7 +89,7 @@ Necesito:
 - Consideraciones de compliance para Perú (SBS, UIF, normativa de
   servicios de pago)
 
-Esto es para una demo de hackathon, no producción.
+Esto es para una demo/prototipo, no producción.
 ```
 
 ### Remesas LatAm con origen en Perú
@@ -210,12 +210,12 @@ Necesito que:
 
 ---
 
-## Prompts para la demo final
+## Prompts para preparar una demo o entrega
 
 ### Preparar la presentación
 
 ```
-La hackathon termina en n horas. Necesito preparar mi demo:
+Necesito preparar una demo de mi proyecto en n horas:
 
 1. Revisa el estado actual del proyecto y lista qué funciona y qué no
 2. Prioriza: qué puedo arreglar en n horas para tener la mejor demo
@@ -228,7 +228,7 @@ La hackathon termina en n horas. Necesito preparar mi demo:
 ### Limpiar para la entrega
 
 ```
-Necesito preparar el repo para la entrega de la hackathon:
+Necesito preparar el repo para compartirlo o publicarlo:
 
 1. Asegúrate de que el README explique qué es el proyecto, el problema
    que resuelve y cómo correrlo localmente
@@ -254,14 +254,14 @@ completo que incluya:
 8. Próximos pasos o features pendientes
 
 El tono debe ser profesional pero accesible. El proyecto está en el
-contexto de Stellar Build PE — Buildathon de Stellar en Perú.
+contexto de Stellar Build Peru — guía comunitaria de builders de Stellar en Perú.
 ```
 
 ### Preparar el pitch técnico
 
 ```
-Ayúdame a preparar la parte técnica del pitch para los jueces de la
-hackathon. Basándote en el código del proyecto:
+Ayúdame a preparar la parte técnica de un pitch o presentación de mi
+proyecto. Basándote en el código del proyecto:
 
 1. Resume en 2-3 oraciones qué construí y por qué es relevante para
    el ecosistema Stellar

@@ -1,176 +1,157 @@
 # Ecosistema Stellar — Protocolos, Wallets y Herramientas
 
-Guía del ecosistema actual de Stellar: protocolos DeFi, wallets, herramientas de desarrollo y proyectos de referencia.
+Guía del ecosistema actual de Stellar: protocolos DeFi, wallets, herramientas de desarrollo, indexers y proyectos de referencia.
+
+> **Directorios canónicos** — para las listas más actualizadas: [Stellar Ecosystem](https://stellar.org/ecosystem) (directorio oficial, buscable por país/activo/categoría), [SCF Projects](https://communityfund.stellar.org/projects) (proyectos financiados con status), [Stellar en DefiLlama](https://defillama.com/chain/stellar) (TVL en vivo). Trata métricas/status de proyectos como volátiles.
 
 ---
 
 ## Protocolos DeFi
 
-### Blend Protocol — Préstamos y crédito
+### Blend Protocol — Lending/Borrowing
+- **Qué hace:** Protocolo de liquidez permissionless — pools de lending/borrowing
+- **Docs:** https://docs.blend.capital · **GitHub:** https://github.com/blend-capital/blend-contracts-v2
+- **Relevante para Perú:** préstamos sin banco, colateralización de activos tokenizados
 
-- **Qué hace:** Protocolo de préstamos descentralizado. Los usuarios proveen liquidez y otros pueden pedir prestado colateralizando activos.
-- **Docs:** https://docs.blend.capital
-- **SDK:** `@blend-capital/blend-sdk`
-- **Casos de uso:** DeFi lending, yield farming, credit scoring on-chain, microfinanzas
-- **Relevante para Perú:** Préstamos sin banco, colateralización de activos tokenizados
-
-### Soroswap — DEX y Aggregador
-
-- **Qué hace:** Exchange descentralizado en Soroban con router para encontrar mejores rutas de swap.
+### Soroswap — DEX y agregador
+- **Qué hace:** Primer DEX + agregador en contratos de Stellar, rutea entre Aqua, Phoenix y el DEX clásico
 - **Docs:** https://docs.soroswap.finance
-- **SDK:** `@soroswap/router-sdk`
-- **Casos de uso:** Swaps de activos, liquidez, price discovery
 
-### Phoenix DEX
+### Aquarius / AQUA Network
+- **Qué hace:** Capa de liquidez gobernada por votación con AMM
+- **Web:** https://aqua.network
 
-- **Qué hace:** AMM nativo de Soroban para trading de pares de activos.
-- **Útil para:** Market making, pools de liquidez, swaps on-chain
+### Phoenix Protocol
+- **Qué hace:** AMM nativo de contratos en Stellar
+- **GitHub:** https://github.com/Phoenix-Protocol-Group
 
 ### DeFindex — Yield Vaults
+- **Qué hace:** Vaults y estrategias de yield automatizadas, con integración a Blend
+- **Docs:** https://docs.defindex.io
 
-- **Qué hace:** Gestión automatizada de estrategias de yield sobre múltiples protocolos.
-- **Útil para:** Vaults de ahorro, gestión de portfolios, yield optimization
+### Orbit CDP Protocol
+- **Qué hace:** Stablecoins colateralizadas (USD, EUR, MXN) contra XLM/otros
+- **Docs:** https://docs.orbitcdp.finance
 
-### Reflector Oracle — Precios on-chain
+### Reflector Network — Oráculo de precios
+- **Qué hace:** Oráculo de precios comunitario, compatible SEP-40
+- **Docs:** https://developers.stellar.org/docs/data/oracles/oracle-providers
+- **Integraciones:** Blend, OrbitCDP, DeFindex
 
-- **Qué hace:** Oráculo de precios para Soroban. Provee precios de activos directamente en la cadena.
-- **Útil para:** Cualquier protocolo que necesite datos de precios (lending, options, swaps)
-- **Integración básica:**
-
-```rust
-// Interface simplificada del oráculo Reflector
-use soroban_sdk::{Address, Env};
-
-pub fn obtener_precio(env: &Env, oracle: &Address, asset: &Address) -> Option<i128> {
-    // El oráculo retorna el precio en base points (decimales fijos)
-    let precio: Option<i128> = env.invoke_contract(
-        oracle,
-        &soroban_sdk::symbol_short!("lastprice"),
-        soroban_sdk::vec![env, asset.into_val(env)],
-    );
-    precio
-}
-```
-
-### Trustless Work — Escrow descentralizado
-
-- **Qué hace:** Escrow como servicio sobre Stellar/Soroban. Permite crear escrows programáticos.
+### Trustless Work — Escrow como servicio
+- **Qué hace:** Escrow programático sobre Stellar — REST API, SDK React, componentes UI
 - **Docs:** https://docs.trustlesswork.com
-- **Casos de uso:** Marketplaces freelance, pagos condicionales, e-commerce descentralizado
-- **Relevante para Perú:** Pagos seguros en trabajo remoto, protección al comprador/vendedor
+- **Relevante para Perú:** pagos seguros en trabajo remoto/freelance
 
 ---
 
 ## Wallets
 
-### Freighter
-
-- **Tipo:** Extensión de navegador (Chrome, Firefox, Brave)
-- **Instalación:** https://freighter.app
-- **SDK:** `@stellar/freighter-api`
-- **Mejor para:** Desarrollo, power users
-- **Notas:** La wallet más usada por desarrolladores en el ecosistema
+### Freighter — Extensión de referencia de SDF
+- **Instalación:** https://freighter.app · **Docs:** https://docs.freighter.app
+- **API:** `@stellar/freighter-api` — usa `getAddress()`, no el deprecado `getPublicKey()`
 
 ```typescript
-import freighter from '@stellar/freighter-api';
+import { isConnected, getAddress, signTransaction } from "@stellar/freighter-api";
 
-// Verificar instalación
-const { isConnected } = await freighter.isConnected();
-
-// Obtener cuenta
-const { publicKey } = await freighter.getPublicKey();
-
-// Firmar transacción
-const { signedTxXdr } = await freighter.signTransaction(txXdr, {
-  networkPassphrase: 'Test SDF Network ; September 2015',
+const { isConnected: instalado } = await isConnected();
+const { address } = await getAddress();
+const { signedTxXdr } = await signTransaction(txXdr, {
+  networkPassphrase: "Test SDF Network ; September 2015",
 });
 ```
 
 ### LOBSTR
+- App móvil (iOS/Android) + web, la wallet más usada por usuarios finales. Soporta DEX trading, multisig, SEP-10.
 
-- **Tipo:** App móvil (iOS, Android) + extensión web
-- **Mejor para:** Usuarios finales, trading de activos
-- **Soporta:** SEP-10, múltiples activos, exchange integrado
+### xBull / Rabet / Hana Wallet
+- Extensiones alternativas de navegador, todas integrables vía Stellar Wallets Kit.
 
-### xBull Wallet
+### Stellar Wallets Kit — integración multi-wallet (v2)
 
-- **Tipo:** PWA + extensión de navegador
-- **Mejor para:** Usuarios intermedios, soporte SEP-7 (deep links)
-- **SDK:** Compatible con Stellar Wallets Kit
-
-### Rabet
-
-- **Tipo:** Extensión de navegador
-- **Mejor para:** Alternativa a Freighter para usuarios finales
-
-### Stellar Wallets Kit — Solución recomendada
-
-Para soportar múltiples wallets con una sola integración:
-
-```typescript
-import {
-  StellarWalletsKit,
-  WalletNetwork,
-  FREIGHTER_ID,
-  LOBSTR_ID,
-  XBULL_ID,
-  allowAllModules,
-} from '@creit.tech/stellar-wallets-kit';
-
-const kit = new StellarWalletsKit({
-  network: WalletNetwork.TESTNET,
-  selectedWalletId: FREIGHTER_ID,
-  modules: allowAllModules(), // soporta todas las wallets disponibles
-});
+```bash
+npx jsr add @creit-tech/stellar-wallets-kit
 ```
 
-### Smart Accounts con Passkeys (Stellar Wallets)
+```typescript
+import { StellarWalletsKit, Networks } from "@creit-tech/stellar-wallets-kit";
+import { defaultModules } from "@creit-tech/stellar-wallets-kit/modules/utils";
 
-Las cuentas inteligentes de Stellar permiten autenticación con passkeys (huella, Face ID):
+StellarWalletsKit.init({ modules: defaultModules(), network: Networks.TESTNET });
+const { address } = await StellarWalletsKit.authModal();
+```
 
-- **Repositorio de referencia:** https://github.com/stellar/launchtube
-- **Ventaja:** Usuarios sin extensiones de navegador, UX nativo de móvil
+Soporta Freighter, LOBSTR, xBull, Albedo, Rabet, Hana, Ledger, Trezor, WalletConnect. **v2 es estático y vive en JSR** (`@creit-tech/...`), no en npm (`@creit.tech/...` era v1).
+
+### Smart Accounts con passkeys
+
+Autenticación WebAuthn (huella, Face ID), sin extensión de navegador:
+
+- **Smart Account Kit** (recomendado, activo): https://github.com/kalepail/smart-account-kit — construido sobre [OpenZeppelin Stellar Contracts](https://github.com/OpenZeppelin/stellar-contracts)
+- **Passkey Kit** (legacy): https://github.com/kalepail/passkey-kit — usar Smart Account Kit para proyectos nuevos
+- **OpenZeppelin Relayer**: fee sponsorship / transacciones sin gas — https://docs.openzeppelin.com/relayer
 
 ---
 
 ## Herramientas de desarrollo
 
-### Soroban CLI
+### Stellar CLI
 
 ```bash
-# Instalación
-cargo install --locked soroban-cli --features opt
+cargo install --locked stellar-cli
+# o: curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh
 
-# Comandos principales
-soroban contract build          # compilar
-soroban contract deploy         # desplegar
-soroban contract invoke         # invocar función
-soroban contract bindings       # generar bindings TypeScript
-soroban keys generate           # crear keypair
-soroban keys fund               # fondear en testnet
-soroban network add             # configurar red
+stellar contract build          # compilar
+stellar contract deploy         # desplegar
+stellar contract invoke         # invocar función
+stellar contract bindings       # generar bindings TypeScript
+stellar keys generate           # crear keypair
+stellar network add             # configurar red
 ```
 
-### Stellar Laboratory
+> El CLI `soroban` (sin el prefijo `stellar`) es obsoleto — todos los comandos migraron a `stellar`.
 
-- **URL:** https://laboratory.stellar.org
-- **Para qué:** Crear y enviar transacciones manualmente, explorar la XDR, probar operaciones
+### Scaffold Stellar
+- **Qué hace:** scaffolding full-stack (contratos + frontend React/Vite/TS)
+- **Web:** https://scaffoldstellar.org · **GitHub:** https://github.com/theahaco/scaffold-stellar
+
+### Stellar Laboratory
+- **URL:** https://lab.stellar.org — crear y enviar transacciones manualmente, explorar XDR
 
 ### Stellar Expert
-
-- **URL:** https://stellar.expert
-- **Para qué:** Block explorer completo para testnet y mainnet
+- **URL:** https://stellar.expert — block explorer completo, testnet y mainnet
 
 ### Friendbot
+- **Testnet:** https://friendbot.stellar.org?addr=<PUBLIC_KEY> — fondea cuentas de prueba gratis
 
-- **Testnet:** https://friendbot.stellar.org?addr=<PUBLIC_KEY>
-- **Futurenet:** https://friendbot-futurenet.stellar.org?addr=<PUBLIC_KEY>
-- **Para qué:** Fondear cuentas en redes de prueba (10,000 XLM gratis)
+---
 
-### Stellar Quest
+## Indexers y datos
 
-- **URL:** https://quest.stellar.org
-- **Para qué:** Aprender Stellar resolviendo desafíos — gamificado con NFTs
+Para queries complejas más allá de RPC/Horizon:
+
+| Indexer | Qué ofrece |
+|---|---|
+| **Mercury** (https://mercurydata.app) | Retroshades, GraphQL, ejecución serverless al cierre de ledger (Zephyr VM) |
+| **SubQuery** (https://subquery.network) | Multi-chain, handlers de bloque/tx/operación/evento |
+| **Goldsky** (https://goldsky.com) | Pipelines en tiempo real, subgraphs |
+| **StellarExpert API** (https://stellar.expert/openapi.html) | REST gratis, sin auth |
+
+Directorio completo: https://developers.stellar.org/docs/data/indexers
+
+---
+
+## AI y MCP
+
+### Raven — MCP para lookups en vivo
+Servidor MCP remoto que busca en documentación de Stellar y datos del ecosistema en tiempo real, cruzando todo en una sola respuesta. Complementa a los skills estáticos (que dan contexto duradero de best practices).
+
+- **Endpoint MCP:** https://raven.stellar.buzz/mcp · **Playground:** https://raven.stellar.buzz/playground
+- **GitHub:** https://github.com/kalepail/stellar-raven
+- **Conectar en Claude Code:** `claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`
+
+### Stellar Skills (skills.stellar.org)
+Directorio oficial de skills modulares para agentes de AI — smart contracts, dApp, assets, data, agentic payments, zk-proofs, standards. Ver [resources.md](resources.md) para instalación.
 
 ---
 
@@ -180,19 +161,18 @@ soroban network add             # configurar red
 
 | Paquete | Uso |
 |---|---|
-| `@stellar/stellar-sdk` | SDK principal — transacciones, RPC, Horizon |
-| `@creit.tech/stellar-wallets-kit` | Integración con múltiples wallets |
-| `@stellar/freighter-api` | Solo para Freighter |
-| `@blend-capital/blend-sdk` | Integración con Blend Protocol |
-| `@soroswap/router-sdk` | Routing de swaps con Soroswap |
+| `@stellar/stellar-sdk` | SDK principal — transacciones, RPC, Horizon, `contract.Client` |
+| `@stellar/freighter-api` | Solo Freighter |
+| `@creit-tech/stellar-wallets-kit` (JSR) | Multi-wallet, v2 |
+| `smart-account-kit` | Smart wallets con passkeys |
+| `@blend-capital/blend-sdk` | Integración con Blend |
 
 ### Rust (contratos)
 
 | Crate | Uso |
 |---|---|
-| `soroban-sdk` | SDK base para contratos |
-| `soroban-token-sdk` | Interacción con tokens SAC |
-| `soroban-auth` | Helpers de autenticación |
+| `soroban-sdk` | SDK base — incluye `soroban_sdk::token::TokenClient`, no hace falta un crate de token aparte |
+| `stellar-tokens`, `stellar-access`, `stellar-contract-utils`, `stellar-macros` | OpenZeppelin Stellar Contracts — tokens, ownable, pausable, upgradeable |
 
 ### Python
 
@@ -208,16 +188,8 @@ keypair = Keypair.from_secret("S...")
 account = server.load_account(keypair.public_key)
 
 tx = (
-    TransactionBuilder(
-        source_account=account,
-        network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-        base_fee=100,
-    )
-    .append_payment_op(
-        destination="G...",
-        asset=Asset.native(),
-        amount="10",
-    )
+    TransactionBuilder(source_account=account, network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE, base_fee=100)
+    .append_payment_op(destination="G...", asset=Asset.native(), amount="10")
     .set_timeout(30)
     .build()
 )
@@ -229,13 +201,13 @@ response = server.submit_transaction(tx)
 
 ## Proyectos de referencia en GitHub
 
-| Proyecto | Descripción | Link |
-|---|---|---|
-| soroban-examples | Ejemplos oficiales de contratos Soroban | stellar/soroban-examples |
-| OpenZeppelin Stellar | Contratos auditados y seguros | OpenZeppelin/stellar-contracts |
-| Soroban React Dapp | Template de dApp con React + Soroban | kaankacar/soroban-react-dapp |
-| Stellar Demo Wallet | Wallet de referencia que implementa SEPs | stellar/demo-wallet |
-| launchtube | Smart accounts con passkeys | stellar/launchtube |
+| Proyecto | Descripción |
+|---|---|
+| `stellar/soroban-examples` | Ejemplos oficiales de contratos (incluye `groth16_verifier`, atomic swap, timelock) |
+| `OpenZeppelin/stellar-contracts` | Contratos auditados y seguros |
+| `stellar/soroban-example-dapp` | dApp de crowdfunding con frontend Next.js |
+| `kalepail/smart-account-kit` | Smart wallets con passkeys |
+| `stellar/stellar-mpp-sdk` | Machine Payments Protocol (Charge + Channel) |
 
 ---
 
@@ -243,17 +215,10 @@ response = server.submit_transaction(tx)
 
 | Canal | Para qué |
 |---|---|
-| Discord de Stellar | Soporte técnico, anuncios, comunidad general |
-| Stellar Stack Exchange | Preguntas técnicas con respuestas indexadas |
-| GitHub Discussions | Propuestas y discusión de protocolo |
-| SDF Blog | Anuncios oficiales y actualizaciones |
-
----
-
-## Directorio de proyectos Stellar
-
-- **Stellar Ecosystem** — https://stellar.org/ecosystem — apps y proyectos en producción sobre Stellar
-- **Community Fund Projects** — https://communityfund.stellar.org/projects — proyectos financiados por la comunidad Stellar
+| [Discord de Stellar](https://discord.gg/stellar) | Soporte técnico, comunidad general |
+| [Stellar Stack Exchange](https://stellar.stackexchange.com) | Preguntas técnicas indexadas |
+| [GitHub Discussions](https://github.com/stellar/stellar-protocol/discussions) | Propuestas y discusión de protocolo |
+| [SDF Blog](https://stellar.org/blog) | Anuncios oficiales |
 
 ---
 
@@ -261,15 +226,15 @@ response = server.submit_transaction(tx)
 
 ### Proyectos relevantes activos
 
-- **Lendara Protocol** — Inversiones tokenizadas para LATAM (inmobiliaria, comercio, agricultura)
-- **Bitso** — Exchange con soporte para XLM/USDC en México, Argentina, Brasil
-- **Buda.com** — Exchange en Chile, Colombia, Perú — soporta compra de XLM con PEN
+- **Lendara Protocol** — Inversiones tokenizadas para LATAM (inmobiliaria, comercio, agricultura) — ver [Lendara_Protocol.md](../../Lendara_Protocol.md) en la raíz de este repo
+- **Bitso** — Exchange con soporte XLM/USDC en México, Argentina, Brasil
+- **Buda.com** — Exchange en Chile, Colombia, Perú — compra de XLM con PEN
 - **Beans App** — Wallet con on/off ramp para LATAM
 
 ### Casos de uso con tracción en LATAM
 
 1. **Remesas** — Envío de dinero desde EE.UU., España, Chile a Perú con USDC
-2. **Pagos freelance** — Cobro en USDC sin cuenta bancaria USD
+2. **Pagos freelance** — Cobro en USDC sin cuenta bancaria en dólares
 3. **Microfinanzas** — Préstamos colateralizados sin historial crediticio tradicional
 4. **Tokenización de activos** — Fraccionamiento de bienes raíces o activos productivos
 5. **Ahorro en dólares** — USDC como cobertura frente a depreciación del PEN

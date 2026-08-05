@@ -1,12 +1,12 @@
 # Setup de AI Gratis
 
-No necesitas una suscripción paga para construir con AI en la buildathon. Aquí van las mejores opciones gratuitas, ordenadas por facilidad de setup.
+No necesitas una suscripción paga para construir con AI sobre Stellar. Aquí van las mejores opciones gratuitas, ordenadas por facilidad de setup.
 
 ---
 
 ## APIs en la nube (sin tarjeta de crédito)
 
-### Tier 1 — Las más útiles para la buildathon
+### Tier 1 — Las más útiles para empezar
 
 | Servicio | Modelo destacado | Límite gratis | Ideal para |
 |---|---|---|---|
@@ -30,7 +30,7 @@ No necesitas una suscripción paga para construir con AI en la buildathon. Aquí
 
 ## Modelos locales (en tu propia laptop)
 
-Si tienes una laptop con 16 GB de RAM o más, puedes correr modelos locales sin depender de internet. Muy útil cuando la WiFi del venue está saturada.
+Si tienes una laptop con 16 GB de RAM o más, puedes correr modelos locales sin depender de internet. Muy útil cuando tu conexión no es confiable o estás en un evento con WiFi saturada.
 
 ### Setup con Ollama
 
@@ -58,7 +58,7 @@ ollama run qwen2.5-coder:7b "Hola, escribe un hello world en Rust"
 
 ### Cuándo usar modelos locales vs nube
 
-- **Local:** Cuando la WiFi del venue está saturada (pasa seguido en hackathons), o cuando quieres respuestas instantáneas sin latencia de red
+- **Local:** Cuando tu conexión a internet no es confiable, o cuando quieres respuestas instantáneas sin latencia de red
 - **Nube:** Cuando necesitas razonamiento complejo, contexto largo (archivos grandes) o los últimos modelos
 - **Combo ideal:** Modelo local para autocompletado + API en nube para consultas grandes
 
@@ -76,7 +76,7 @@ Para modelos más grandes (30B+), puedes alquilar una GPU por el fin de semana a
 | Google Colab Pro | ~$10 USD/mes | T4, A100 | Alternativa si solo necesitas un notebook |
 
 > **Tips para alquiler de GPU:**
-> - Reserva antes de la buildathon — la demanda sube durante eventos grandes
+> - Reserva con anticipación — la demanda sube durante eventos grandes
 > - Usa spot instances si puedes tolerar interrupciones ocasionales
 > - Ten un script de setup listo (`setup.sh`) para no perder tiempo configurando el entorno
 > - Considera Google Colab si solo necesitas correr un script puntual
@@ -128,7 +128,7 @@ ANTHROPIC_API_KEY=tu-key-aqui
 
 ---
 
-## Setup rápido recomendado para la buildathon
+## Setup rápido recomendado
 
 **Opción A — Minimalista (0 configuración):**
 ```
@@ -152,7 +152,7 @@ Vercel AI SDK + Groq (velocidad) + Gemini (razonamiento) → sin costo, cambia d
 
 ---
 
-## Checklist pre-buildathon
+## Checklist antes de empezar
 
 - [ ] Crear cuenta en Google AI Studio y obtener API key
 - [ ] Crear cuenta en Groq y obtener API key

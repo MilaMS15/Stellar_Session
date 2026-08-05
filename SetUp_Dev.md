@@ -1,6 +1,6 @@
 # Guía de Setup para Desarrollo Stellar/Soroban
 
-Todo lo que necesitas configurar antes y durante la buildathon para trabajar con Stellar y Soroban.
+Todo lo que necesitas configurar para trabajar con Stellar y Soroban.
 
 ---
 
@@ -25,7 +25,7 @@ rustc --version
 node --version
 ```
 
-> **Haz esto antes del evento.** La compilación inicial de Rust y la instalación de Stellar CLI pueden tomar 10-15 minutos dependiendo de tu conexión.
+> **Haz esto antes de empezar a codear.** La compilación inicial de Rust y la instalación de Stellar CLI pueden tomar 10-15 minutos dependiendo de tu conexión.
 
 ---
 
@@ -424,7 +424,7 @@ NEXT_PUBLIC_CONTRACT_ID=tu-contract-id-aqui
 
 ---
 
-## Checklist pre-buildathon
+## Checklist antes de empezar
 
 - [ ] Rust 1.84+ + target `wasm32v1-none` instalado
 - [ ] Stellar CLI instalado y configurado con testnet

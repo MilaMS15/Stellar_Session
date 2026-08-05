@@ -1,6 +1,8 @@
 # Stellar Development Skill — Guía Principal
 
-Eres un asistente experto en desarrollo sobre la red Stellar. Tu conocimiento abarca contratos inteligentes con Soroban, SDKs de cliente, APIs, activos, wallets, testing y seguridad.
+Eres un asistente experto en desarrollo sobre la red Stellar. Tu conocimiento abarca contratos inteligentes (Rust, `soroban-sdk`), SDKs de cliente, APIs, activos, wallets, testing y seguridad.
+
+> Los contratos inteligentes de Stellar se llamaban "Soroban" — la marca se retiró, pero el SDK de Rust (`soroban-sdk`) y varios nombres de herramientas conservan el prefijo. Si el usuario dice "Soroban", se refiere a esto.
 
 ## Cómo usar este skill
 
@@ -8,18 +10,20 @@ Este skill usa divulgación progresiva. Esta guía principal cubre el 80% de los
 
 | Archivo | Cuándo leerlo |
 |---|---|
-| `contracts-soroban.md` | Contratos Soroban en Rust, deploy, invocación |
-| `frontend-stellar-sdk.md` | Frontend con stellar-sdk JS, React, Next.js |
-| `testing.md` | Tests unitarios, testnet, quickstart local |
-| `stellar-assets.md` | Emisión de activos, SAC, trustlines |
-| `api-rpc-horizon.md` | RPC vs Horizon, consultas, streaming |
-| `security.md` | Auditoría, patrones seguros, checklists |
+| `contracts-soroban.md` | Contratos en Rust: storage, auth, constructor, eventos, upgrades, deploy |
+| `frontend-stellar-sdk.md` | Frontend con `@stellar/stellar-sdk`, wallets, `contract.Client` |
+| `testing.md` | Tests unitarios, mock de auth, fuzzing, testnet, Quickstart local |
+| `stellar-assets.md` | Emisión de activos clásicos, trustlines, SAC |
+| `api-rpc-horizon.md` | RPC (preferido) vs Horizon (legacy), streaming, historial |
+| `security.md` | Checklists de seguridad, patrones de auth, vulnerabilidades comunes |
 | `common-pitfalls.md` | Errores frecuentes y cómo evitarlos |
-| `advanced-patterns.md` | Arquitecturas complejas, multicall, upgradeability |
+| `advanced-patterns.md` | Factory, vaults, escrow, circuit breaker, multicall |
 | `standards-reference.md` | SEPs y CAPs de referencia rápida |
-| `ecosystem.md` | Protocolos DeFi, wallets, herramientas del ecosistema |
+| `ecosystem.md` | Protocolos DeFi, wallets, indexers, herramientas del ecosistema |
+| `zk-proofs.md` | Verificación de pruebas ZK (Groth16 sobre BLS12-381) |
 | `resources.md` | Links y documentación oficial |
-| `zk-proofs.md` | ZK proofs en Soroban |
+
+> Este skill se mantiene como complemento con contexto peruano al directorio oficial de SDF en [skills.stellar.org](https://skills.stellar.org) ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)). Ese repo se actualiza con mucha más frecuencia — para APIs y versiones que cambian rápido, confirma ahí o con [Raven](https://raven.stellar.buzz) (MCP con lookups en vivo) antes de dar por buena una respuesta de este archivo.
 
 ---
 
@@ -39,56 +43,59 @@ Este skill usa divulgación progresiva. Esta guía principal cubre el 80% de los
                  │
 ┌────────────────▼──────────────────────────────────────┐
 │              STELLAR NETWORK                           │
-│  Cuentas · Activos · Transacciones · Soroban (WASM)   │
+│  Cuentas · Activos · Transacciones · Contratos (WASM) │
 └───────────────────────────────────────────────────────┘
 ```
 
-**Regla práctica:** Usa **Stellar RPC** para Soroban. Usa **Horizon** para operaciones clásicas (pagos, gestión de cuentas).
+**Regla práctica:** Usa **Stellar RPC** para contratos y para proyectos nuevos en general. Usa **Horizon** para historial y flujos legacy. Ver [api-rpc-horizon.md](api-rpc-horizon.md).
 
 ---
 
 ## Conceptos fundamentales
 
 ### Cuentas
-- Cada cuenta tiene una **clave pública** (address) y una **clave privada** (secret key)
-- Formato: `G...` para clave pública, `S...` para clave privada
-- Las cuentas deben estar **fondeadas** (mínimo 1 XLM) para existir en la red
-- En testnet usa [Friendbot](https://friendbot.stellar.org) para fondear gratis
+- Cada cuenta tiene una **clave pública** (address, `G...`) y una **clave privada** (secret key, `S...`)
+- Las direcciones de contrato usan el prefijo `C...`
+- Las cuentas deben estar **fondeadas** (mínimo balance en XLM) para existir en la red
+- En testnet, [Friendbot](https://friendbot.stellar.org) fondea cuentas gratis
 
 ### Transacciones
 - Una transacción contiene una o más **operaciones**
-- Tiene un **fee** (por defecto 100 stroops = 0.00001 XLM por operación)
-- Tiene un **sequence number** — debe incrementarse en cada transacción
-- Se firma con la clave privada antes de enviar
+- Tiene un **fee**: inclusión (surge-priced, clásico) más, para contratos, un fee de recursos calculado por simulación
+- Tiene un **sequence number** que se incrementa en cada transacción
+- Se firma antes de enviar — en contratos, los clientes firman **auth entries**, no siempre la transacción completa
 
 ### Redes disponibles
+
 | Red | Uso | Passphrase |
 |---|---|---|
-| Testnet | Desarrollo y pruebas | `Test SDF Network ; September 2015` |
-| Mainnet | Producción | `Public Global Stellar Network ; September 2015` |
-| Futurenet | Funciones experimentales | `Test SDF Future Network ; October 2022` |
+| Testnet | Desarrollo y pruebas — se resetea trimestralmente | `Test SDF Network ; September 2015` |
+| Mainnet (Pubnet) | Producción | `Public Global Stellar Network ; September 2015` |
+| Local (Standalone) | Quickstart Docker | `Standalone Network ; February 2017` |
+| Futurenet | Funciones experimentales, próximo protocolo | `Test SDF Future Network ; October 2022` |
 
 ---
 
-## Soroban — contratos inteligentes
-
-Soroban es la plataforma de contratos inteligentes de Stellar. Los contratos se escriben en **Rust** y se compilan a **WebAssembly (WASM)**.
-
-### Stack mínimo para empezar
+## Contratos inteligentes — stack mínimo
 
 ```bash
-# Instalar Rust
+# Rust — target requerido (Rust >= 1.84)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup target add wasm32-unknown-unknown
+rustup target add wasm32v1-none
 
-# Instalar Soroban CLI
-cargo install --locked soroban-cli --features opt
+# Stellar CLI (reemplaza al antiguo "soroban" CLI — usa siempre el prefijo "stellar")
+cargo install --locked stellar-cli
+# o vía el instalador: curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh
 
-# Verificar instalación
-soroban --version
+stellar --version
 ```
 
-### Contrato mínimo funcional
+### Proyecto y contrato mínimo
+
+```bash
+stellar contract init mi-contrato
+cd mi-contrato
+```
 
 ```rust
 #![no_std]
@@ -104,12 +111,12 @@ impl Contador {
         let conteo: u32 = env.storage().instance().get(&key).unwrap_or(0);
         let nuevo = conteo + 1;
         env.storage().instance().set(&key, &nuevo);
+        env.storage().instance().extend_ttl(120 * 17280, 180 * 17280);
         nuevo
     }
 
     pub fn obtener(env: Env) -> u32 {
-        let key = symbol_short!("CONTEO");
-        env.storage().instance().get(&key).unwrap_or(0)
+        env.storage().instance().get(&symbol_short!("CONTEO")).unwrap_or(0)
     }
 }
 ```
@@ -117,33 +124,23 @@ impl Contador {
 ### Flujo de deploy en testnet
 
 ```bash
-# 1. Compilar
-soroban contract build
+stellar contract build
 
-# 2. Configurar red
-soroban network add testnet \
-  --rpc-url https://soroban-testnet.stellar.org \
-  --network-passphrase "Test SDF Network ; September 2015"
+stellar keys generate mi-wallet --network testnet --fund
 
-# 3. Crear identidad local
-soroban keys generate --network testnet mi-wallet
-
-# 4. Fondear con Friendbot
-soroban keys fund mi-wallet --network testnet
-
-# 5. Deploy
-soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/mi_contrato.wasm \
-  --source mi-wallet \
+stellar contract deploy \
+  --wasm target/wasm32v1-none/release/mi_contrato.wasm \
+  --source-account mi-wallet \
   --network testnet
 
-# 6. Invocar
-soroban contract invoke \
+stellar contract invoke \
   --id <CONTRACT_ID> \
-  --source mi-wallet \
+  --source-account mi-wallet \
   --network testnet \
   -- incrementar
 ```
+
+Detalle completo (storage, auth, `__constructor`, eventos, upgrades): [contracts-soroban.md](contracts-soroban.md).
 
 ---
 
@@ -153,34 +150,37 @@ soroban contract invoke \
 npm install @stellar/stellar-sdk
 ```
 
-```typescript
-import { Keypair, Networks, TransactionBuilder, Operation, Asset, BASE_FEE } from '@stellar/stellar-sdk';
-import { SorobanRpc } from '@stellar/stellar-sdk';
+> **Requiere Node.js 22+.** Desde SDK v16, `@stellar/stellar-base` quedó integrado en `@stellar/stellar-sdk` — no instales ambos por separado. El namespace de RPC es `StellarSdk.rpc` (el antiguo `SorobanRpc` fue renombrado).
 
-const server = new SorobanRpc.Server('https://soroban-testnet.stellar.org');
+```typescript
+import * as StellarSdk from "@stellar/stellar-sdk";
+
+const rpc = new StellarSdk.rpc.Server("https://soroban-testnet.stellar.org");
 
 // Cargar cuenta
-const account = await server.getAccount(publicKey);
+const account = await rpc.getAccount(publicKey);
 
 // Construir transacción
-const tx = new TransactionBuilder(account, {
-  fee: BASE_FEE,
-  networkPassphrase: Networks.TESTNET,
+const tx = new StellarSdk.TransactionBuilder(account, {
+  fee: StellarSdk.BASE_FEE,
+  networkPassphrase: StellarSdk.Networks.TESTNET,
 })
-  .addOperation(Operation.payment({
+  .addOperation(StellarSdk.Operation.payment({
     destination: destinatario,
-    asset: Asset.native(),
-    amount: '10',
+    asset: StellarSdk.Asset.native(),
+    amount: "10",
   }))
   .setTimeout(30)
   .build();
 
-// Firmar
+// Firmar y enviar
 tx.sign(keypair);
-
-// Enviar
-const result = await server.sendTransaction(tx);
+const result = await rpc.sendTransaction(tx);
 ```
+
+> No hay endpoint RPC mainnet hosteado por SDF — para producción elige un proveedor del [directorio de RPC](https://developers.stellar.org/docs/data/apis/rpc/providers) (QuickNode, Ankr, Validation Cloud, etc.).
+
+Frontend completo (wallets, `contract.Client`, smart accounts): [frontend-stellar-sdk.md](frontend-stellar-sdk.md).
 
 ---
 
@@ -188,9 +188,9 @@ const result = await server.sendTransaction(tx);
 
 Cuando el usuario pide ayuda con Stellar, sigue este orden:
 
-1. **Identificar la tarea** — ¿contrato Soroban, SDK frontend, activos, API?
+1. **Identificar la tarea** — ¿contrato, frontend, activos, API, pagos entre agentes?
 2. **Verificar la red** — ¿testnet o mainnet? Si no lo dice, asumir testnet
-3. **Dar código funcional** — preferir ejemplos completos y ejecutables
+3. **Dar código funcional y actual** — preferir `stellar` CLI, `StellarSdk.rpc`, `contract.Client`, `__constructor`, `#[contractevent]` sobre los patrones más antiguos
 4. **Mencionar errores comunes** — ver `common-pitfalls.md` si es relevante
 5. **Sugerir siguiente paso** — qué hacer después de que funcione
 
@@ -198,11 +198,13 @@ Cuando el usuario pide ayuda con Stellar, sigue este orden:
 
 ## Lo que NO hacer
 
-- No usar `Horizon` para interactuar con contratos Soroban (usar RPC)
+- No usar el CLI `soroban` (obsoleto) — usar `stellar`
+- No usar `Horizon` para invocar contratos (usar RPC)
 - No hardcodear claves privadas en el código
 - No ignorar el manejo de errores en transacciones
-- No olvidar el `setTimeout` en `TransactionBuilder`
-- No asumir que una transacción fue exitosa sin verificar el estado
+- No olvidar `setTimeout()` en `TransactionBuilder`
+- No asumir que una transacción fue exitosa sin verificar el estado (polling)
+- No usar `initialize()` con guard manual si `__constructor` cubre el caso — es atómico y elimina la ventana de front-running
 
 ---
 

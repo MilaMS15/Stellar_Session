@@ -1,6 +1,6 @@
-# Guía de Claude Code para la Hackathon
+# Guía de Claude Code para Builders de Stellar
 
-Claude Code es una CLI que te permite trabajar con Claude directamente desde tu terminal. Es especialmente útil en hackathons porque te deja iterar rápido sin salir de tu flujo de desarrollo.
+Claude Code es una CLI que te permite trabajar con Claude directamente desde tu terminal. Es especialmente útil para prototipar rápido — te deja iterar sin salir de tu flujo de desarrollo, ya sea en una sesión corta de fin de semana o en un proyecto que vas a mantener.
 
 ## Instalación
 
@@ -32,7 +32,7 @@ Esto te da:
 - Pasos de implementación ordenados
 - Riesgos técnicos identificados
 
-> **Pro tip:** Guardá el plan en un archivo `PLAN.md` y usalo como referencia durante toda la hackathon.
+> **Pro tip:** Guardá el plan en un archivo `PLAN.md` y usalo como referencia durante todo el desarrollo.
 
 ## CLAUDE.md — Tu contexto persistente
 
@@ -43,7 +43,6 @@ Creá un archivo `CLAUDE.md` en la raíz de tu proyecto con contexto importante:
 
 ## Proyecto
 App de remesas PERU usando Stellar/Soroban.
-Buildathon x Stellar
 
 ## Stack
 - Frontend: Next.js 15 + TypeScript
@@ -89,9 +88,9 @@ En vez de hacer todo secuencial, podés pedir:
 - Para editar el mismo archivo desde múltiples agentes
 - Cuando necesitás razonamiento secuencial
 
-## Workflows para la hackathon
+## Workflows recomendados
 
-### Día 1 — Setup y MVP
+### Fase 1 — Setup y MVP
 ```
 1. /plan [describe tu idea completa]
 2. Revisa y ajusta el plan
@@ -99,14 +98,14 @@ En vez de hacer todo secuencial, podés pedir:
 4. Itera paso por paso
 ```
 
-### Día 2 — Features y integración
+### Fase 2 — Features y integración
 ```
 1. "Revisa el estado actual del proyecto y dime qué falta"
 2. "Implementa [feature específica]"
 3. "Corre los tests y arregla lo que falle"
 ```
 
-### Día 3 — Polish y demo
+### Fase 3 — Polish y demo
 ```
 1. "Revisa el código buscando bugs obvios"
 2. "Mejora la UI para la demo"

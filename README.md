@@ -1,9 +1,9 @@
 
-# Stellar Build PE — Guía para Builders
+# Stellar Build Peru — Guía para Builders
 
-Guía práctica para desarrolladores que participan en el **Buildathon Ethereum Lima × Stellar**, organizado por BAF y el programa StarMaker en colaboración con Ethereum Lima.
+Guía práctica para desarrolladores en Perú que quieren empezar a construir sobre **Stellar** — sin importar tu experiencia previa con la red, acceso a herramientas de AI pagas, o el hardware que tengas.
 
-El objetivo es que cada participante — sin importar su experiencia con Stellar, acceso a herramientas de AI pagas, o hardware — pueda construir algo funcional y enviarlo antes del 8 de mayo.
+Nació como material de apoyo para el Buildathon Ethereum Lima × Stellar (mayo 2026), organizado por BAF y el programa StarMaker en colaboración con Ethereum Lima. Ese evento ya terminó, pero la guía sigue viva: la mantenemos como punto de entrada general para cualquier builder peruano que quiera iniciar en el ecosistema Stellar.
 
 ---
 
@@ -11,14 +11,25 @@ El objetivo es que cada participante — sin importar su experiencia con Stellar
 
 | # | Archivo | Qué vas a encontrar |
 |---|---|---|
-| 0 | [Reglas_Buildathon.md](./Reglas_Buildathon.md) | Lee esto primero — Fechas, entregables, premios y criterios de evaluación |
 | 1 | [SetUp_AI.md](./SetUp_AI.md) | Opciones de AI sin tarjeta de crédito ni suscripción |
 | 2 | [Guia_Claude_Code.md](./Guia_Claude_Code.md) | Workflows con Claude Code: plan mode, agentes paralelos, CLAUDE.md |
 | 3 | [SetUp_Dev.md](./SetUp_Dev.md) | Testnet, configuración de Soroban, Freighter, errores comunes |
 | 4 | [Prompts_Iniciales.md](./Prompts_Iniciales.md) | Prompts listos para copiar y pegar en tu sesión de Claude Code |
-| 5 | [Recursos_Buildathon.md](./Recursos_Buildathon.md) | Repos de referencia, documentación oficial, videos y herramientas |
+| 5 | [Recursos.md](./Recursos.md) | Stellar Skills, repos de referencia, documentación oficial, herramientas |
 | 6 | [Herramientas_AI.md](./Herramientas_AI.md) | Tools de AI para Stellar, asistentes de código, frameworks multi-agente |
 | 7 | [Lendara_Protocol.md](./Lendara_Protocol.md) | Protocolo de inversiones tokenizadas — SDK listo para usar con 5 templates |
+
+---
+
+## Por dónde empezar
+
+Si es tu primera vez construyendo sobre Stellar:
+
+1. **Dale contexto a tu agente de AI.** Antes de escribir código, dile a tu asistente (Claude Code, Cursor, lo que uses) que lea `skills.stellar.org` — es el directorio oficial de skills de Stellar Development Foundation, con guías para smart contracts, dApps, assets, APIs, pagos entre agentes y más. Ver [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai).
+2. **Elige tu setup de AI.** No necesitas pagar nada — [SetUp_AI.md](./SetUp_AI.md) cubre las mejores opciones gratuitas, en la nube o locales.
+3. **Configura tu entorno de desarrollo.** [SetUp_Dev.md](./SetUp_Dev.md) te lleva de cero a un contrato Soroban deployado en testnet.
+4. **Define qué vas a construir.** Piensa en un problema real — remesas, pagos para emprendedores sin cuenta bancaria, trazabilidad de productos, identidad digital, micropréstamos. Estas ideas son fértiles para Perú porque atacan fricciones reales del sistema financiero local.
+5. **Itera con prompts probados.** [Prompts_Iniciales.md](./Prompts_Iniciales.md) tiene plantillas para arrancar proyectos, debuggear, e integrar el contexto peruano (CCI, Yape/Plin, remesas).
 
 ---
 
@@ -46,7 +57,7 @@ Ver [VotaOnChain/README.md](./VotaOnChain/README.md) para setup completo y [Vota
 
 ## Skill de AI — Stellar Development
 
-Skill para asistentes de AI con conocimiento profundo del ecosistema Stellar.
+Skill para asistentes de AI con conocimiento profundo del ecosistema Stellar y contexto peruano. Es un complemento al directorio oficial [skills.stellar.org](https://skills.stellar.org) (ver [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai)) — instala ambos, no uno en lugar del otro.
 
 ```
 Stellar-dev-skill/
@@ -70,25 +81,10 @@ Basado en [stellar/stellar-dev-skill](https://github.com/stellar/Stellar-dev-ski
 
 **Instalación en Claude Code:**
 ```bash
-cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev/
+cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev-pe/
 ```
 
 Ver [Stellar-dev-skill/README.md](./Stellar-dev-skill/README.md) para más opciones de instalación.
-
----
-
-## Contexto del evento
-
-El **Buildathon Ethereum Lima × Stellar** es un evento intensivo de un día enfocado en la creación de soluciones tecnológicas sobre la blockchain de Stellar, dirigido a desarrolladores, diseñadores, builders y entusiastas Web3 de todos los niveles.
-
-- **Evento presencial:** 2 de mayo, 4:00 p.m. – 8:00 p.m.
-- **Plazo de entrega:** 8 de mayo, 11:59 PM (6 días post-evento para desarrollar)
-- **Revisión de proyectos:** 11 al 16 de mayo
-- **Anuncio de ganadores:** 17 de mayo
-- **Formato:** Individual o equipos de hasta 3 personas
-- **Premios:** $300 USD en total ($150 / $100 / $50)
-- **Presentacion del evento:** [Ver en Canva](https://canva.link/yegtdzcdycbnsmd)
-- **Chat de comunicacion y soporte:** [Grupo de WhatsApp](https://chat.whatsapp.com/JB5clEPH9uK2iwzeHkMPOJ)
 
 ---
 
@@ -113,9 +109,9 @@ A diferencia de otras guías enfocadas en SPEI (México) o PIX (Brasil), esta se
 
 ---
 
-## Armada por la comunidad
+## Origen
 
-**Ethereum Lima · StarMaker by BAF · Stellar · Minted In Peru **
+Nació como material de apoyo para el **Buildathon Ethereum Lima × Stellar** — armada por **Ethereum Lima · StarMaker by BAF · Stellar · Minted In Peru**. Hoy la mantenemos como guía general y abierta para la comunidad builder de Stellar en Perú.
 
 ---
 

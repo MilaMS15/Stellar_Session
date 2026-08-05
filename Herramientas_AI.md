@@ -9,7 +9,7 @@ Tools de AI específicamente útiles para desarrollar sobre Stellar, asistentes 
 - **Por qué usarlo:** Plan mode, agentes paralelos, contexto persistente con CLAUDE.md, modelos Claude 4.x
 - **Setup:** `npm install -g @anthropic-ai/claude-code`
 - **Costo:** Free tier disponible
-- **Ideal para:** Desarrollo completo durante la hackathon (ver [Guia_Claude_Code.md](./Guia_Claude_Code.md))
+- **Ideal para:** Desarrollo completo en Stellar, de cero a producción (ver [Guia_Claude_Code.md](./Guia_Claude_Code.md))
 
 ### GitHub Copilot
 - **Qué es:** Autocompletado de código integrado en VS Code
@@ -28,23 +28,51 @@ Tools de AI específicamente útiles para desarrollar sobre Stellar, asistentes 
 - **Costo:** Free tier disponible
 - **Ideal para:** Alternativa a Cursor — tener en cuenta la integración con el ecosistema OpenAI tras la adquisición
 
-## Skills para Claude Code
+## Skills para Claude Code (y cualquier agente de AI)
 
-Skills que extienden el conocimiento de Claude Code con contexto técnico especializado:
+Lo primero que deberías hacer antes de escribir una línea de código en Stellar: darle contexto a tu agente. [skills.stellar.org](https://skills.stellar.org) es el directorio oficial de SDF — funciona con cualquier agente, solo dile:
+
+```
+Read skills.stellar.org before you start building on Stellar.
+```
 
 | Skill | Link | Qué aporta |
 |---|---|---|
-| **Stellar Dev Skill** | [Stellar-dev-skill/](./Stellar-dev-skill/) | Contratos Soroban, SDK, testnet, patrones LATAM — incluido en este repo |
+| **Stellar Smart Contracts** (oficial) | `skills.stellar.org/skills/smart-contracts/SKILL.md` | Contratos Rust en Soroban — patrones, seguridad, arquitectura |
+| **Frontend & Wallets** (oficial) | `skills.stellar.org/skills/dapp/SKILL.md` | JS SDK, Freighter, Wallets Kit, passkey smart accounts |
+| **RPC & Horizon APIs** (oficial) | `skills.stellar.org/skills/data/SKILL.md` | Consultas on-chain, streaming, indexing |
+| **Stellar Dev Skill** (este repo) | [Stellar-dev-skill/](./Stellar-dev-skill/) | Complemento con contexto peruano — testnet, patrones LATAM |
 | **OpenZeppelin Skills** | https://github.com/OpenZeppelin/openzeppelin-skills | Skills oficiales de OpenZeppelin — seguridad, contratos, auditoría |
 
-**Instalación:**
-```bash
-# Stellar Dev Skill (este repo)
-cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev/
+Ver el listado completo de skills oficiales y de comunidad en [Recursos.md](./Recursos.md#stellar-skills--contexto-para-tu-agente-de-ai).
 
-# OpenZeppelin Skills
+**Instalación de los skills oficiales de SDF ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)):**
+```bash
+# Claude Code — plugin marketplace (recomendado)
+/plugin marketplace add stellar/stellar-dev-skill
+/plugin install stellar-dev@stellar-dev
+
+# Cualquier agente — vía npx skills
+npx skills add https://github.com/stellar/stellar-dev-skill
+```
+
+**Instalación del Stellar Dev Skill de este repo (complemento con contexto peruano):**
+```bash
+cp -r Stellar-dev-skill/skill ~/.claude/skills/stellar-dev-pe/
+```
+
+**Instalación de OpenZeppelin Skills:**
+```bash
 git clone https://github.com/OpenZeppelin/openzeppelin-skills
 cp -r openzeppelin-skills/skill ~/.claude/skills/openzeppelin/
+```
+
+### Raven — MCP para lookups en vivo
+
+Complemento a los skills: [Raven](https://github.com/kalepail/stellar-raven) es un servidor MCP remoto que busca en la documentación de Stellar y datos del ecosistema en tiempo real. Los skills le dan a tu agente contexto duradero (best practices); Raven responde preguntas puntuales con información actual. Usa ambos.
+
+```bash
+claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
 ```
 
 ---
@@ -78,7 +106,7 @@ Si tu proyecto involucra agentes de AI que interactúan con blockchain:
 - **Útil para:** Chatbots e interfaces conversacionales
 - **Con Stellar:** Chat que permite consultar balances o enviar transacciones vía lenguaje natural
 
-## Combinaciones recomendadas para la hackathon
+## Combinaciones recomendadas
 
 | Tipo de proyecto | Stack sugerido |
 |---|---|
@@ -87,7 +115,7 @@ Si tu proyecto involucra agentes de AI que interactúan con blockchain:
 | **Agentes AI** | Claude Code + LangChain + Stellar SDK (ejecución on-chain) |
 | **Sin costo / offline** | Ollama local + VS Code + Stellar CLI → 100% offline, 0 costo |
 
-## Tips para usar AI efectivamente en hackathons
+## Tips para usar AI efectivamente
 
 - **No dependas de un solo servicio:** Ten siempre un backup (ej: si Claude está caído, usa Gemini)
 - **Cachea respuestas útiles:** Guardá snippets que funcionen en un archivo `snippets.md`

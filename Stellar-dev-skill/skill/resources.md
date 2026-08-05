@@ -1,6 +1,24 @@
-# Recursos de referencia — Stellar y Soroban
+# Recursos de referencia — Stellar
 
-Links curados de documentación oficial, tutoriales, herramientas y comunidad.
+Links curados de documentación oficial, herramientas, comunidad y contexto peruano.
+
+---
+
+## Stellar Skills oficiales y Raven
+
+| Recurso | URL | Para qué |
+|---|---|---|
+| Stellar Skills | https://skills.stellar.org | Directorio oficial de skills de SDF — instalar vía plugin marketplace de Claude Code o `npx skills` |
+| Raven (MCP) | https://raven.stellar.buzz/mcp | Lookups en vivo sobre docs y datos del ecosistema — complementa a los skills estáticos |
+
+```bash
+# Skills oficiales — Claude Code
+/plugin marketplace add stellar/stellar-dev-skill
+/plugin install stellar-dev@stellar-dev
+
+# Raven
+claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
+```
 
 ---
 
@@ -9,24 +27,25 @@ Links curados de documentación oficial, tutoriales, herramientas y comunidad.
 | Recurso | URL | Para qué |
 |---|---|---|
 | Stellar Developers | https://developers.stellar.org | Punto de entrada principal |
-| Soroban Docs | https://soroban.stellar.org | Smart contracts en Rust |
+| Build Smart Contracts | https://developers.stellar.org/docs/build/smart-contracts | Guías de contratos |
 | Stellar SDK (JS) | https://stellar.github.io/js-stellar-sdk/ | Referencia API del SDK JS |
 | Stellar SDK (Python) | https://stellar-sdk.readthedocs.io | Referencia API del SDK Python |
-| Stellar Laboratory | https://laboratory.stellar.org | Herramienta interactiva |
+| Stellar Laboratory | https://lab.stellar.org | Herramienta interactiva |
 | Freighter API | https://docs.freighter.app | Integración con wallet Freighter |
-| Stellar Wallets Kit | https://stellarwalletskit.dev | Multi-wallet integration |
+| Stellar Wallets Kit (v2) | https://github.com/Creit-Tech/Stellar-Wallets-Kit | Multi-wallet, JSR |
 
 ---
 
-## Soroban — referencia técnica
+## Contratos — referencia técnica
 
 | Recurso | URL |
 |---|---|
-| Getting Started con Soroban | https://developers.stellar.org/docs/build/smart-contracts/getting-started |
+| Getting Started | https://developers.stellar.org/docs/build/smart-contracts/getting-started |
 | soroban-sdk (docs.rs) | https://docs.rs/soroban-sdk |
 | Ejemplos de contratos | https://github.com/stellar/soroban-examples |
-| OpenZeppelin para Stellar | https://docs.openzeppelin.com/stellar-contracts · [GitHub](https://github.com/OpenZeppelin/stellar-contracts) · [Wizard](https://wizard.openzeppelin.com/stellar) |
-| Soroban CLI referencia | https://developers.stellar.org/docs/tools/developer-tools/cli |
+| OpenZeppelin Stellar Contracts | https://github.com/OpenZeppelin/stellar-contracts · [Wizard](https://wizard.openzeppelin.com/stellar) |
+| Stellar CLI | https://developers.stellar.org/docs/tools/stellar-cli |
+| RPC providers (mainnet) | https://developers.stellar.org/docs/data/apis/rpc/providers |
 
 ---
 
@@ -36,6 +55,7 @@ Links curados de documentación oficial, tutoriales, herramientas y comunidad.
 |---|---|
 | Blend Protocol | https://docs.blend.capital |
 | Soroswap | https://docs.soroswap.finance |
+| DeFindex | https://docs.defindex.io |
 | Trustless Work | https://docs.trustlesswork.com |
 | Lendara Protocol | https://lendaraprotocol.gitbook.io/lendara |
 
@@ -45,37 +65,40 @@ Links curados de documentación oficial, tutoriales, herramientas y comunidad.
 
 | Herramienta | URL | Uso |
 |---|---|---|
-| Stellar Laboratory | https://laboratory.stellar.org | Test de transacciones |
+| Stellar Laboratory | https://lab.stellar.org | Test de transacciones |
 | Stellar Expert | https://stellar.expert | Block explorer |
 | Friendbot (testnet) | https://friendbot.stellar.org | Fondear cuentas de prueba |
-| Stellar Quest | https://quest.stellar.org | Aprendizaje gamificado |
-| Stellar Dashboard | https://dashboard.stellar.org | Estado de la red |
+| Scaffold Stellar | https://scaffoldstellar.org | Scaffolding full-stack |
 
 ---
 
-## Estándares SEP
+## Estándares SEP (selección)
 
 | SEP | Descripción | Link |
 |---|---|---|
-| SEP-1 | stellar.toml | https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0001.md |
-| SEP-10 | Auth web | https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md |
-| SEP-24 | Transferencias interactivas | https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md |
-| SEP-38 | Cotizaciones | https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md |
-| SEP-41 | Token interface Soroban | https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0041.md |
+| SEP-1 | `stellar.toml` | [sep-0001](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0001.md) |
+| SEP-10 | Auth web | [sep-0010](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md) |
+| SEP-24 | Transferencias interactivas | [sep-0024](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md) |
+| SEP-38 | Cotizaciones | [sep-0038](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md) |
+| SEP-41 | Token interface | [sep-0041](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0041.md) |
+| SEP-45 | Web Auth para contract accounts | [sep-0045](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0045.md) |
+
+Lista completa y mapa por caso de uso: [standards-reference.md](standards-reference.md).
 
 ---
 
 ## Repositorios de referencia
 
 ```
-stellar/stellar-sdk              → SDK oficial JavaScript
-stellar/java-stellar-sdk         → SDK oficial Java
+stellar/js-stellar-sdk           → SDK oficial JavaScript
 stellar/py-stellar-base          → SDK oficial Python
 stellar/go                       → SDK oficial Go
-stellar/soroban-examples         → Contratos de ejemplo
-stellar/launchtube               → Smart accounts con passkeys
-stellar/demo-wallet              → Wallet de referencia con SEPs
-kaankacar/soroban-react-dapp    → Template React + Soroban
+stellar/soroban-examples         → Contratos de ejemplo (incluye groth16_verifier)
+stellar/stellar-cli               → CLI oficial
+stellar/stellar-dev-skill        → Skills oficiales de AI (fuente de skills.stellar.org)
+kalepail/smart-account-kit       → Smart wallets con passkeys
+kalepail/stellar-raven           → MCP con lookups en vivo
+OpenZeppelin/stellar-contracts   → Contratos auditados
 ```
 
 ---
@@ -84,22 +107,9 @@ kaankacar/soroban-react-dapp    → Template React + Soroban
 
 | Canal | URL | Para qué |
 |---|---|---|
-| Discord Stellar | https://discord.gg/stellardev | Soporte técnico, comunidad |
+| Discord Stellar | https://discord.gg/stellar | Soporte técnico, comunidad |
 | Stack Exchange | https://stellar.stackexchange.com | Preguntas con respuestas indexadas |
-| GitHub Issues (SDK) | https://github.com/stellar/js-stellar-sdk/issues | Bugs del SDK |
 | SDF Blog | https://stellar.org/blog | Anuncios oficiales |
-| Reddit r/Stellar | https://reddit.com/r/Stellar | Comunidad general |
-
----
-
-## Tutoriales y cursos
-
-| Recurso | Formato | Nivel |
-|---|---|---|
-| Stellar Quest | Gamificado, desafíos on-chain | Básico → Avanzado |
-| Soroban Getting Started | Tutorial oficial paso a paso | Básico |
-| Stellar Developer Workshops | Videos en YouTube | Intermedio |
-| SDF Examples | Código en GitHub | Intermedio → Avanzado |
 
 ---
 
@@ -110,7 +120,7 @@ kaankacar/soroban-react-dapp    → Template React + Soroban
 | Buda.com | Exchange con soporte PEN — compra XLM con transferencia bancaria |
 | Binance P2P | Compra USDC/XLM con Yape o transferencia bancaria |
 | Stellar Anchor List | https://www.stellar.org/ecosystem/anchors — anchors verificados por SDF |
-| Guía Stellar Build PE | Este repositorio — contexto local para la buildathon |
+| Guía Stellar Build Peru | Este repositorio — contexto local para builders peruanos |
 
 ---
 
@@ -121,34 +131,27 @@ kaankacar/soroban-react-dapp    → Template React + Soroban
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup target add wasm32v1-none   # Rust 1.84+ requerido
 
-# Soroban CLI
-cargo install --locked soroban-cli --features opt
+# Stellar CLI (reemplaza al antiguo "soroban" CLI)
+cargo install --locked stellar-cli
 
 # SDK JavaScript
-npm install @stellar/stellar-sdk
+npm install @stellar/stellar-sdk @stellar/freighter-api
 
-# Stellar Wallets Kit
-npm install @creit.tech/stellar-wallets-kit
+# Stellar Wallets Kit v2 (JSR, no npm)
+npx jsr add @creit-tech/stellar-wallets-kit
 
-# Configurar testnet
-soroban network add testnet \
-  --rpc-url https://soroban-testnet.stellar.org \
-  --network-passphrase "Test SDF Network ; September 2015"
-
-# Crear keypair y fondear
-soroban keys generate --network testnet mi-wallet
-soroban keys fund mi-wallet --network testnet
+# Identidad de testnet, fondeada
+stellar keys generate mi-wallet --network testnet --fund
 ```
 
 ---
 
-## Versiones actuales (mayo 2026)
+## Sobre versiones
 
-| Componente | Versión | Notas |
-|---|---|---|
-| soroban-sdk | 21.x | Verificar en crates.io |
-| stellar-sdk (JS) | 12.x | Verificar en npm |
-| Soroban CLI | 21.x | Verificar con `soroban --version` |
-| Protocol Stellar | 22 | Incluye Soroban V2 |
+Este archivo evita fijar números de versión específicos a propósito — `soroban-sdk`, el CLI y el protocolo avanzan juntos y rápido. Antes de fijar una versión en `Cargo.toml` o `package.json`:
 
-> **Nota:** El ecosistema Stellar evoluciona rápido. Siempre verificar las versiones actuales en los repositorios oficiales antes de empezar un proyecto.
+- `soroban-sdk`: la mayor sigue al protocolo. Última versión en [crates.io/crates/soroban-sdk](https://crates.io/crates/soroban-sdk).
+- `@stellar/stellar-sdk`: última en [npmjs.com/package/@stellar/stellar-sdk](https://www.npmjs.com/package/@stellar/stellar-sdk) — requiere Node 22+ desde v16.
+- Protocolo de red activo: `stellar network settings --network mainnet` o [Stellar Lab](https://lab.stellar.org).
+
+> Para contexto siempre actualizado, prioriza [skills.stellar.org](https://skills.stellar.org) o [Raven](https://raven.stellar.buzz) sobre cualquier número fijado en este repositorio.

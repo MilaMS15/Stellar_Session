@@ -1,146 +1,165 @@
-# Testing en Stellar y Soroban
+# Testing en Stellar
 
-Estrategias de prueba para contratos Soroban: tests unitarios en Rust, testnet y entorno local con Quickstart.
+Estrategia de testing para contratos, del test unitario nativo más rápido hasta pruebas contra estado real de mainnet.
+
+Capas, de más rápida a más lenta:
+
+1. **Tests unitarios** — Rust nativo con `testutils` del SDK (no WASM, debugger completo)
+2. **Integración local** — contenedor Stellar Quickstart
+3. **Testnet** — ensayo en red pública
+4. **Fork tests** — replay contra estado real del ledger
 
 ---
 
-## Tests unitarios en Rust
-
-Soroban SDK incluye utilidades de testing (`testutils`) que permiten simular el entorno de blockchain sin desplegar.
-
-### Configuración en Cargo.toml
-
-```toml
-[dev-dependencies]
-soroban-sdk = { version = "21", features = ["testutils"] }
-```
-
-### Estructura básica de un test
+## Tests unitarios
 
 ```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use soroban_sdk::{testutils::Address as _, Address, Env};
+// src/test.rs — archivo separado incluido desde lib.rs con `mod test;`
+#![cfg(test)]
+extern crate std; // los contratos son no_std; los tests pueden usar std explícitamente
+use soroban_sdk::{
+    testutils::{Address as _, MockAuth, MockAuthInvoke},
+    Address, Env, IntoVal,
+};
+use crate::{Contract, ContractClient};
 
-    #[test]
-    fn test_incrementar() {
-        // 1. Crear entorno de test
-        let env = Env::default();
-        
-        // 2. Registrar el contrato
-        let contract_id = env.register_contract(None, Contador);
-        let client = ContadorClient::new(&env, &contract_id);
-        
-        // 3. Invocar funciones
-        assert_eq!(client.obtener(), 0);
-        client.incrementar();
-        assert_eq!(client.obtener(), 1);
-        client.incrementar();
-        assert_eq!(client.obtener(), 2);
-    }
+#[test]
+fn test_basico() {
+    let env = Env::default();
+    let contract_id = env.register(Contract, ());   // () = sin argumentos de constructor
+    let client = ContractClient::new(&env, &contract_id);
+    let user = Address::generate(&env);
+
+    client.set_owner(&user);
+    assert_eq!(client.get_value(), 0);
 }
 ```
+
+`env.register` (reemplaza al antiguo `register_contract`) toma los argumentos del constructor como segundo parámetro: `env.register(Contract, (admin.clone(),))` para un contrato con `__constructor(env, admin)`.
+
+> **Los límites de recursos se aplican en tests** (SDK 25+): `Env::default()` aplica los límites de CPU/memoria de mainnet, así que un contrato que reventaría el budget en producción falla también en el test unitario — es una feature. Para tests deliberadamente pesados: `env.cost_estimate().disable_resource_limits()`.
 
 ### Simular autenticación
 
+`mock_all_auths()` aprueba todo — cómodo, pero puede esconder un `require_auth` faltante. Combínalo siempre con aserciones sobre `env.auths()`, o mockea auths específicas:
+
 ```rust
 #[test]
-fn test_transferencia_autenticada() {
+fn test_auth() {
     let env = Env::default();
-    env.mock_all_auths(); // Simular que todas las auth son aprobadas
-    
-    let contract_id = env.register_contract(None, MiContrato);
-    let client = MiContratoClient::new(&env, &contract_id);
-    
-    let usuario = Address::generate(&env);
-    let destinatario = Address::generate(&env);
-    
-    client.inicializar(&usuario, &1000_i128);
-    client.transferir(&usuario, &destinatario, &500_i128);
-    
-    assert_eq!(client.balance(&usuario), 500);
-    assert_eq!(client.balance(&destinatario), 500);
-    
-    // Verificar qué autorizaciones se solicitaron
-    let auths = env.auths();
-    assert_eq!(auths.len(), 1);
+    let contract_id = env.register(Contract, ());
+    let client = ContractClient::new(&env, &contract_id);
+    let user = Address::generate(&env);
+    let otro = Address::generate(&env);
+
+    env.mock_auths(&[MockAuth {
+        address: &user,
+        invoke: &MockAuthInvoke {
+            contract: &contract_id,
+            fn_name: "transfer",
+            args: (&user, &otro, &100i128).into_val(&env),
+            sub_invokes: &[],
+        },
+    }]);
+
+    client.transfer(&user, &otro, &100);
+    assert!(!env.auths().is_empty()); // verificar que la auth fue realmente requerida
 }
 ```
+
+`env.auths()` devuelve pares `(Address, AuthorizedInvocation)` **solo de la invocación más reciente** — cualquier llamada posterior (incluso una lectura) lo resetea, así que asértalo inmediatamente después de la llamada bajo prueba.
 
 ### Verificar que falla correctamente
 
 ```rust
 #[test]
-#[should_panic(expected = "saldo insuficiente")]
+#[should_panic(expected = "Error(Contract, #2)")]
 fn test_transferencia_sin_fondos() {
     let env = Env::default();
     env.mock_all_auths();
-    
-    let contract_id = env.register_contract(None, MiContrato);
-    let client = MiContratoClient::new(&env, &contract_id);
-    
-    let usuario = Address::generate(&env);
+    let contract_id = env.register(Contract, ());
+    let client = ContractClient::new(&env, &contract_id);
+
+    let user = Address::generate(&env);
     let otro = Address::generate(&env);
-    
-    client.inicializar(&usuario, &100_i128);
-    client.transferir(&usuario, &otro, &1000_i128); // Debe fallar
+    client.transfer(&user, &otro, &1000_i128); // debe fallar
 }
 ```
 
-### Test con tokens SAC (Stellar Asset Contract)
+Con errores tipados (`#[contracterror]`), el panic message incluye el código — usa `try_transfer` en el cliente si prefieres capturar el `Result` en vez de esperar un panic.
+
+### Eventos
+
+Los eventos definidos con `#[contractevent]` se comparan directamente contra la XDR emitida:
 
 ```rust
-use soroban_sdk::testutils::Ledger;
-use soroban_token_sdk::TokenClient;
+use soroban_sdk::{testutils::Events as _, Event as _};
+
+let expected = Transfer { from: from.clone(), to: to.clone(), amount: 100 };
+assert_eq!(env.events().all(), std::vec![expected.to_xdr(&env, &contract_id)]);
+```
+
+`env.events().all()` también se resetea en cada llamada — asértalo justo después.
+
+### Tiempo y estado del ledger
+
+```rust
+env.ledger().set_timestamp(1000);
+env.ledger().set_sequence_number(1000);
+// ... actuar, luego avanzar:
+env.ledger().set_timestamp(2500);
+```
+
+### TTL de storage
+
+```rust
+use soroban_sdk::testutils::storage::Persistent as _;
+
+let ttl: u32 = env.as_contract(&contract_id, || {
+    env.storage().persistent().get_ttl(&DataKey::MyData)
+});
+assert!(ttl > 0);
+```
+
+### Test con tokens SAC
+
+```rust
+use soroban_sdk::testutils::Address as _;
 
 #[test]
 fn test_con_token() {
     let env = Env::default();
     env.mock_all_auths();
-    
-    // Crear un token de prueba
+
     let admin = Address::generate(&env);
     let token_id = env.register_stellar_asset_contract_v2(admin.clone());
-    let token = TokenClient::new(&env, &token_id.address());
-    
-    // Acuñar tokens para el usuario
+    let token = soroban_sdk::token::Client::new(&env, &token_id.address());
+
     let usuario = Address::generate(&env);
-    token.mint(&usuario, &1000_i128);
-    
+    let sac_admin = soroban_sdk::token::StellarAssetClient::new(&env, &token_id.address());
+    sac_admin.mint(&usuario, &1000_i128);
+
     assert_eq!(token.balance(&usuario), 1000);
-    
-    // Ahora probar tu contrato con este token
-    let contract_id = env.register_contract(None, MiProtocolo);
+
+    let contract_id = env.register(MiProtocolo, ());
     let cliente = MiProtocoloClient::new(&env, &contract_id);
-    
     cliente.depositar(&token_id.address(), &usuario, &500_i128);
     assert_eq!(token.balance(&usuario), 500);
 }
 ```
 
-### Manipular el estado del ledger
+> `soroban_token_sdk` no existe como crate separado en el SDK actual — el cliente de token vive en `soroban_sdk::token`.
+
+### Cross-contract
+
+Registra una dependencia real desde su WASM y prueba la interacción:
 
 ```rust
-#[test]
-fn test_expiracion() {
-    let env = Env::default();
-    env.mock_all_auths();
-    
-    let contract_id = env.register_contract(None, MiContrato);
-    let client = MiContratoClient::new(&env, &contract_id);
-    
-    client.crear_posicion(&usuario, &1000_i128);
-    
-    // Avanzar el ledger 100 bloques
-    env.ledger().with_mut(|info| {
-        info.sequence_number += 100;
-        info.timestamp += 100 * 5; // ~5 segundos por ledger
-    });
-    
-    // Verificar que la posición sigue activa (o expiró según tu lógica)
-    assert!(client.posicion_activa(&usuario));
-}
+mod token { soroban_sdk::contractimport!(file = "token.wasm"); }
+
+let token_id = env.register(token::WASM, ());
+let vault_id = env.register(VaultContract, ());
+// mueve ambos por sus clientes tipados
 ```
 
 ---
@@ -148,166 +167,184 @@ fn test_expiracion() {
 ## Correr los tests
 
 ```bash
-# Todos los tests
 cargo test
-
-# Test específico
 cargo test test_transferencia_autenticada
-
-# Con output visible
 cargo test -- --nocapture
-
-# Generar reporte de cobertura (requiere cargo-tarpaulin)
-cargo install cargo-tarpaulin
-cargo tarpaulin --out Html
 ```
 
 ---
 
-## Testnet — pruebas en red real
-
-### Fondear cuenta de prueba
+## Red local (Quickstart)
 
 ```bash
-# Con Soroban CLI
-soroban keys generate --network testnet mi-cuenta-test
-soroban keys fund mi-cuenta-test --network testnet
-
-# Con curl directo
-curl "https://friendbot.stellar.org?addr=<PUBLIC_KEY>"
-
-# Con Horizon JS SDK
-import { Horizon } from '@stellar/stellar-sdk';
-const server = new Horizon.Server('https://horizon-testnet.stellar.org');
-await server.friendbot(publicKey).call();
+stellar container start local     # o: docker run --rm -it -p 8000:8000 stellar/quickstart:latest --local
+stellar keys generate mi-cuenta --network local --fund
+stellar contract deploy --wasm target/wasm32v1-none/release/mi_contrato.wasm \
+  --source-account mi-cuenta --network local
 ```
 
-### Script de deploy y prueba en testnet
+Endpoints: RPC `http://localhost:8000/soroban/rpc`, Horizon `http://localhost:8000`, passphrase `"Standalone Network ; February 2017"`.
+
+---
+
+## Testnet
+
+```bash
+stellar keys generate mi-cuenta --network testnet --fund
+stellar contract build
+stellar contract deploy \
+  --wasm target/wasm32v1-none/release/mi_contrato.wasm \
+  --source-account mi-cuenta \
+  --network testnet
+```
+
+- **Testnet se resetea trimestralmente** — todo se borra. Scriptea tus deploys, nunca trates el estado de testnet como duradero.
+- Testnet corre la próxima versión de protocolo antes que mainnet — es donde verificas contra un upgrade próximo.
+
+### Script de deploy y prueba
 
 ```bash
 #!/bin/bash
 set -e
 
-echo "Compilando contrato..."
-soroban contract build
+echo "Compilando..."
+stellar contract build
 
-echo "Deploying en testnet..."
-CONTRACT_ID=$(soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/mi_contrato.wasm \
-  --source mi-cuenta-test \
-  --network testnet)
+echo "Desplegando en testnet..."
+CONTRACT_ID=$(stellar contract deploy \
+  --wasm target/wasm32v1-none/release/mi_contrato.wasm \
+  --source-account mi-cuenta \
+  --network testnet \
+  -- --admin "$(stellar keys address mi-cuenta)")
 echo "Contract ID: $CONTRACT_ID"
 
-echo "Inicializando..."
-soroban contract invoke \
-  --id "$CONTRACT_ID" \
-  --source mi-cuenta-test \
-  --network testnet \
-  -- inicializar \
-  --admin "$(soroban keys address mi-cuenta-test)"
-
 echo "Prueba de función..."
-RESULTADO=$(soroban contract invoke \
+stellar contract invoke \
   --id "$CONTRACT_ID" \
-  --source mi-cuenta-test \
+  --source-account mi-cuenta \
   --network testnet \
-  -- mi_funcion \
-  --param "hola")
-echo "Resultado: $RESULTADO"
-```
-
----
-
-## Entorno local con Docker Quickstart
-
-Para pruebas más rápidas sin depender de testnet:
-
-```bash
-# Levantar nodo local de Stellar
-docker run --rm -it \
-  -p 8000:8000 \
-  --name stellar-quickstart \
-  stellar/quickstart:latest \
-  --standalone \
-  --enable-soroban-rpc
-
-# Verificar que está corriendo
-curl http://localhost:8000/health
-
-# Configurar red local en Soroban CLI
-soroban network add local \
-  --rpc-url http://localhost:8000/soroban/rpc \
-  --network-passphrase "Standalone Network ; February 2017"
-
-# Crear y fondear cuenta local
-soroban keys generate --network local mi-cuenta-local
-soroban keys fund mi-cuenta-local --network local
-
-# Deploy local (más rápido que testnet)
-soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/mi_contrato.wasm \
-  --source mi-cuenta-local \
-  --network local
+  -- mi_funcion --param "hola"
 ```
 
 ---
 
 ## Tests de integración con TypeScript
 
+Contra local o testnet, el mismo flujo que usa un frontend (simular, ensamblar, firmar, enviar):
+
 ```typescript
-// tests/contrato.test.ts
-import { describe, it, expect, beforeAll } from 'vitest';
-import { SorobanRpc, Keypair, Networks } from '@stellar/stellar-sdk';
-import { Client } from '../src/contracts/mi-contrato';
+import * as StellarSdk from "@stellar/stellar-sdk";
 
-const RPC_URL = 'http://localhost:8000/soroban/rpc';
-const NETWORK = 'Standalone Network ; February 2017';
+const rpc = new StellarSdk.rpc.Server(process.env.RPC_URL!);
+const account = await rpc.getAccount(keypair.publicKey());
+const contract = new StellarSdk.Contract(contractId);
 
-describe('MiContrato', () => {
-  let cliente: Client;
-  let keypair: Keypair;
+const tx = new StellarSdk.TransactionBuilder(account, { fee: "100", networkPassphrase })
+  .addOperation(contract.call("initialize", StellarSdk.Address.fromString(keypair.publicKey()).toScVal()))
+  .setTimeout(30)
+  .build();
 
-  beforeAll(async () => {
-    keypair = Keypair.random();
-    
-    // Fondear cuenta en local
-    await fetch(`http://localhost:8000/friendbot?addr=${keypair.publicKey()}`);
-    
-    // Deploy del contrato
-    // (en producción harías esto por separado)
-    
-    cliente = new Client({
-      contractId: process.env.CONTRACT_ID!,
-      networkPassphrase: NETWORK,
-      rpcUrl: RPC_URL,
-      publicKey: keypair.publicKey(),
-      signTransaction: async (xdr) => {
-        const tx = TransactionBuilder.fromXDR(xdr, NETWORK);
-        tx.sign(keypair);
-        return { signedTxXdr: tx.toXDR() };
-      },
-    });
-  });
+const sim = await rpc.simulateTransaction(tx);
+const prepared = StellarSdk.rpc.assembleTransaction(tx, sim).build();
+prepared.sign(keypair);
+const result = await rpc.sendTransaction(prepared);
+```
 
-  it('debe incrementar el contador', async () => {
-    const { result } = await cliente.incrementar();
-    expect(result).toBe(1n);
-  });
+En Rust, marca los tests que dependen de red con `#[ignore]` y córrelos con `cargo test -- --ignored` donde haya red disponible.
 
-  it('debe retornar el valor actual', async () => {
-    const { result } = await cliente.obtener();
-    expect(result).toBe(1n);
-  });
+---
+
+## Fuzz testing
+
+Todos los tipos `#[contracttype]` implementan `SorobanArbitrary` bajo el feature `testutils`, así que el fuzzing funciona listo con `cargo-fuzz`:
+
+```bash
+rustup install nightly
+cargo install --locked cargo-fuzz
+cargo fuzz init
+```
+
+```rust
+// fuzz/fuzz_targets/fuzz_deposit.rs
+#![no_main]
+use libfuzzer_sys::fuzz_target;
+use soroban_sdk::{testutils::Address as _, Address, Env};
+use my_contract::{Contract, ContractClient};
+
+fuzz_target!(|amount: i128| {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(Contract, ());
+    let client = ContractClient::new(&env, &contract_id);
+    let user = Address::generate(&env);
+
+    let _ = client.try_deposit(&user, &amount); // nunca debe hacer panic inesperado
 });
+```
+
+```bash
+cargo +nightly fuzz run fuzz_deposit
+```
+
+## Property-based testing
+
+`proptest` + `SorobanArbitrary` corre en `cargo test` normal — úsalo para fijar invariantes encontrados por fuzzing:
+
+```rust
+proptest! {
+    #[test]
+    fn deposit_then_withdraw_preserves_balance(amount in 1i128..=i128::MAX) {
+        client.deposit(&user, &amount);
+        client.withdraw(&user, &amount);
+        prop_assert_eq!(client.balance(&user), 0);
+    }
+}
+```
+
+## Snapshots, fork tests y mutation tests
+
+- **Test snapshots**: cada test escribe un snapshot JSON de eventos + estado final del ledger en `test_snapshots/`. Comitéalos — los diffs exponen cambios de comportamiento no intencionados.
+- **Fork testing**: `stellar snapshot create --address C... --output json --out snapshot.json`, luego `Env::from_ledger_snapshot_file("snapshot.json")` para probar contra estado real de red.
+- **Mutation testing**: `cargo install --locked cargo-mutants && cargo mutants` — muta tu código fuente y reporta `MISSED` donde los tests no lo detectaron.
+
+## Perfilado de recursos
+
+```bash
+stellar contract invoke --id CONTRACT_ID --source-account mi-cuenta --network testnet \
+  --send=no -- funcion --arg valor
+```
+
+La simulación reporta instrucciones de CPU, lecturas/escrituras y fees sin enviar. En tests unitarios, `env.cost_estimate().resources()` da los mismos números programáticamente.
+
+---
+
+## CI
+
+```yaml
+name: Test contracts
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add wasm32v1-none
+      - run: cargo test
+      - run: cargo build --release --target wasm32v1-none
 ```
 
 ---
 
 ## Checklist de testing
 
-- [ ] Tests unitarios cubren el happy path
-- [ ] Tests unitarios cubren casos de error (`#[should_panic]`)
-- [ ] Se prueba autenticación y que falla sin auth
-- [ ] Se prueba la lógica de expiración/TTL si aplica
-- [ ] Se desplegó y probó manualmente en testnet
-- [ ] Los scripts de deploy están documentados y son reproducibles
+- [ ] Tests unitarios cubren todas las funciones públicas, incluidos los caminos de error (`try_` methods)
+- [ ] Casos límite: montos en cero, valores máximos, estado vacío
+- [ ] Autorización verificada con `env.auths()` o `mock_auths` específicos
+- [ ] Eventos asertados (comparación `event.to_xdr`)
+- [ ] Comportamiento de TTL de storage validado
+- [ ] Interacciones cross-contract probadas contra WASM real
+- [ ] Fuzz targets para rutas que mueven valor (deposit, withdraw, swap)
+- [ ] Test snapshots comiteados
+- [ ] Test de integración contra red local en CI
+- [ ] Ensayo en testnet antes de mainnet

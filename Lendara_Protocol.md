@@ -1,4 +1,4 @@
-# Lendara Protocol — Guía para la Hackathon
+# Lendara Protocol — Guía para Builders
 
 Lendara es un protocolo de inversión reutilizable sobre Stellar/Soroban que usa Trustless Work como infraestructura de escrow. Permite crear pools de inversión tokenizados donde los inversores aportan capital, un operador lo usa, un verificador aprueba, y la ganancia vuelve a los inversores.
 
@@ -211,7 +211,7 @@ Activity Reporter (reportes on-chain, no controla fondos)
 
 ---
 
-## Ideas para la hackathon (contexto peruano)
+## Ideas de proyectos (contexto peruano)
 
 | Idea | Template | Descripción |
 |---|---|---|
@@ -228,7 +228,7 @@ Activity Reporter (reportes on-chain, no controla fondos)
 ### Explorar templates y elegir el mejor
 
 ```
-Estoy en la Buildathon de Stellar PE y quiero usar Lendara Protocol.
+Estoy construyendo sobre Stellar en Perú y quiero usar Lendara Protocol.
 Mi idea de proyecto es: [describe tu idea].
 
 Tengo instalado @lendara/sdk. Ayúdame a:
@@ -269,7 +269,7 @@ parámetros del escrow, o en el mapeo de roles. Muéstrame el fix.
 ### Demo completa con datos reales de testnet
 
 ```
-Quiero armar una demo completa de Lendara en testnet para la hackathon.
+Quiero armar una demo completa de Lendara en testnet.
 El template que uso es [template]. Necesito:
 
 1. Crear 3-4 wallets de testnet con roles distintos (operator, verifier,
