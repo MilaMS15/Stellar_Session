@@ -6,7 +6,7 @@ Tools de AI específicamente útiles para desarrollar sobre Stellar, asistentes 
 
 ### Claude Code
 - **Qué es:** Herramienta oficial de Anthropic para programar con Claude — disponible como CLI, desktop app, web (claude.ai/code) e IDE extensions (VS Code, JetBrains)
-- **Por qué usarlo:** Plan mode, agentes paralelos, contexto persistente con CLAUDE.md, modelos Claude 4.x
+- **Por qué usarlo:** Plan mode, agentes paralelos, contexto persistente con CLAUDE.md, modelos Claude 5.x (Sonnet 5, Opus 5, Haiku 4.5)
 - **Setup:** `npm install -g @anthropic-ai/claude-code`
 - **Costo:** Free tier disponible
 - **Ideal para:** Desarrollo completo en Stellar, de cero a producción (ver [Guia_Claude_Code.md](./Guia_Claude_Code.md))
@@ -14,19 +14,28 @@ Tools de AI específicamente útiles para desarrollar sobre Stellar, asistentes 
 ### GitHub Copilot
 - **Qué es:** Autocompletado de código integrado en VS Code
 - **Por qué usarlo:** Sugerencias inline mientras escribís
-- **Costo:** Gratis para estudiantes y open source
+- **Costo:** Free tier abierto a cualquier cuenta de GitHub (2,000 completions + 50 chat requests/mes); estudiantes verificados (GitHub Student Developer Pack) tienen acceso ampliado sin costo
 - **Ideal para:** Completar código boilerplate, escribir tests
 
 ### Cursor
-- **Qué es:** Editor de código con AI integrada
+- **Qué es:** Editor de código con AI integrada. Desde agosto 2026 es propiedad de SpaceX (mismo grupo que xAI/SpaceXAI, X y Grok)
 - **Por qué usarlo:** Chat + edición directa en el editor
-- **Costo:** Free tier limitado
-- **Ideal para:** Si prefieres una interfaz visual sobre CLI
+- **Cambios tras la adquisición:**
+  - **OpenAI está retirando sus modelos de Cursor** (corte anunciado para el 12 de noviembre de 2026) — Cursor pasa a depender más de Grok (ya ofrece Grok 4.6) y de otros proveedores como Anthropic/Google
+  - El nombre "Cursor" podría cambiar más adelante (sin confirmar), sin cambios de pricing anunciados por ahora
+- **Costo:** Plan Hobby gratis (2,000 completions + 50 "slow premium requests"/mes, sin tarjeta); Pro desde $20/mes
+- **Ideal para:** Si prefieres una interfaz visual sobre CLI — ten en cuenta la dependencia creciente de Grok si tu flujo requiere un modelo específico de OpenAI
 
-### Windsurf
-- **Qué es:** Editor AI con "flows" para tareas complejas (adquirido por OpenAI en 2025)
-- **Costo:** Free tier disponible
-- **Ideal para:** Alternativa a Cursor — tener en cuenta la integración con el ecosistema OpenAI tras la adquisición
+### Devin Desktop (antes Windsurf)
+- **Qué es:** Editor AI con "flows" para tareas complejas. Windsurf fue adquirido por Cognition (creadores del agente Devin) en julio 2025. En junio de 2026 Cognition renombró el producto a "Devin Desktop" como parte de la unificación de marca
+- **Costo:** Free tier disponible (pricing sin cambios tras el rebrand)
+- **Ideal para:** Alternativa a Cursor, ahora dentro del ecosistema de agentes de Cognition/Devin
+
+### Google Antigravity
+- **Qué es:** IDE agent-first de Google basado en VS Code, con orquestación multi-agente y automatización de navegador. Soporta Gemini y modelos de terceros
+- **Por qué usarlo:** Agentes que planifican y ejecutan tareas completas, no solo autocompletado
+- **Costo:** Gratis en preview público (tier Individual $0), con cuotas semanales que Google ha ido ajustando; Pro $19.99/mes, Ultra desde $99.99/mes
+- **Ideal para:** Probar flujos agénticos con Gemini sin salir de un entorno tipo VS Code
 
 ## Dale contexto a tu agente antes de escribir código
 
@@ -83,16 +92,6 @@ claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"
 Probarlo sin instalar nada: [raven.stellar.buzz/playground](https://raven.stellar.buzz/playground).
 
 ---
-
-## Herramientas Stellar-specific con AI
-
-### Stellar Turrets
-- Funciones serverless para operaciones Stellar
-- Útil para lógica de negocio que interactúa con la red
-
-### Soroban Copilot (comunidad)
-- Prompts y templates específicos para desarrollo Soroban
-- Patrones comunes pre-configurados
 
 ## Frameworks multi-agente
 

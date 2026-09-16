@@ -51,6 +51,7 @@ Read skills.stellar.org before you start building on Stellar.
 | **Agent Payments** | `skills.stellar.org/skills/agentic-payments/SKILL.md` | Monetizar APIs de AI con x402 y Machine Payments Protocol (MPP) |
 | **ZK Proofs** | `skills.stellar.org/skills/zk-proofs/SKILL.md` | Verificar pruebas zero-knowledge on-chain |
 | **SEPs, CAPs & Ecosystem** | `skills.stellar.org/skills/standards/SKILL.md` | Estándares y guía de integración con el ecosistema |
+| **Cross-Chain** | `skills.stellar.org/skills/cross-chain/SKILL.md` | Integraciones cross-chain — CCTP, Axelar, LayerZero |
 
 Estos skills son open source y viven en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill) (Apache-2.0), mantenido por SDF.
 
@@ -58,6 +59,9 @@ Estos skills son open source y viven en [stellar/stellar-dev-skill](https://gith
 # Claude Code — vía plugin marketplace (agrega el skill de forma permanente)
 /plugin marketplace add stellar/stellar-dev-skill
 /plugin install stellar-dev@stellar-dev
+
+# Cualquier agente — instalador universal
+npx skills add https://github.com/stellar/stellar-dev-skill
 
 # Manual — clonar y copiar el directorio skills/ a la ruta de tu agente
 git clone https://github.com/stellar/stellar-dev-skill

@@ -2,6 +2,8 @@
 
 Prompts listos para copiar y pegar en tu sesión de Claude Code. Adaptados para proyectos Stellar en el contexto peruano.
 
+> **Nota de setiembre 2026:** el voto de mainnet para **Protocol 28 ("Adapter")** es el 16 de setiembre de 2026. Si algo que funcionaba en testnet deja de funcionar en mainnet alrededor de esa fecha, puede ser por esto — ver el prompt de [compatibilidad con el upgrade de protocolo](#cuando-cambia-el-protocolo-de-stellar).
+
 ---
 
 ## Arrancar un proyecto desde cero
@@ -65,6 +67,23 @@ lealtad para un negocio peruano. El contrato debe:
 
 Stack: Rust + Soroban SDK. Empieza con la estructura del contrato,
 los tests unitarios y el script de despliegue en testnet.
+```
+
+### Pagos entre agentes de AI (x402 / Machine Payments Protocol)
+
+```
+Quiero exponer un endpoint HTTP que cobre por uso a agentes de AI
+usando x402 sobre Stellar (pago por request, en stablecoin). El flujo:
+
+1. Un agente pide un recurso a mi API
+2. Mi servidor responde 402 con el precio en USDC
+3. El agente autoriza el pago on-chain y reintenta la request
+4. Mi servidor verifica el pago on-chain y entrega el recurso
+
+Stack: Node.js + TypeScript. Usa testnet. Antes de escribir código,
+lee el skill oficial de Agent Payments
+(skills.stellar.org/skills/agentic-payments/SKILL.md) y la doc de
+x402 en developers.stellar.org/docs/build/agentic-payments/x402.
 ```
 
 ---
@@ -174,7 +193,9 @@ La conexión con Freighter wallet no funciona. Cuando hago click en
 
 Revisa:
 1. Que Freighter esté instalado y configurado en testnet
-2. Que el código de conexión sea correcto (window.freighter API)
+2. Que el código de conexión use el paquete `@stellar/freighter-api`
+   correctamente (`isConnected`, `requestAccess`, `signTransaction`) —
+   no el objeto `window.freighter` directamente
 3. Que los event handlers estén bien configurados
 4. Que no haya errores en la consola del navegador
 
@@ -191,6 +212,26 @@ Lo que espero recibir es: [resultado esperado]
 
 Mi código está en [archivo]. Revisa si estoy construyendo la query
 correctamente y si estoy parseando la respuesta bien. Muéstrame el fix.
+
+Si la data que necesito es de un contrato Soroban (no de una cuenta,
+pago o trustline clásica), dime si debería estar consultando RPC en
+vez de Horizon — Horizon es la opción legacy para eso, RPC es la
+preferida para datos de Soroban.
+```
+
+### Cuando cambia el protocolo de Stellar
+
+```
+Stellar acaba de subir de protocolo en mainnet (o estoy por probar el
+upgrade en testnet). Revisa mi proyecto y dime:
+
+1. Si mi contrato usa algún patrón afectado por los CAPs del último
+   protocolo (ej. contratos de cuenta personalizados que parsean el
+   contexto de autorización, o lógica de migración de contratos)
+2. Si mi versión de `soroban-sdk` / `@stellar/stellar-sdk` necesita
+   actualizarse para el nuevo protocolo
+3. Qué debería volver a probar en testnet antes de asumir que todo
+   sigue funcionando igual en mainnet
 ```
 
 ### Cuando un contrato Soroban devuelve error en invocación

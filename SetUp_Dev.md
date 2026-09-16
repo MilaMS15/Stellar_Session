@@ -6,24 +6,65 @@ Todo lo que necesitas configurar para trabajar con Stellar y Soroban.
 
 ## Pre-requisitos
 
+Necesitas: **git**, **Node.js 18+ con pnpm** (para el frontend), **Rust** con el target `wasm32v1-none` (para compilar contratos Soroban) y la **Stellar CLI**.
+
+> 🪟 **¿Usas Windows?** Instala [WSL2](https://learn.microsoft.com/es-es/windows/wsl/install) (Windows Subsystem for Linux) y ejecuta todos los comandos de este setup dentro de tu distro WSL (ej. Ubuntu), no en PowerShell/CMD. La Stellar CLI y las herramientas de Rust no ofrecen soporte confiable en Windows nativo. Una vez dentro de WSL, sigue las instrucciones de "Linux" de abajo.
+
+<details>
+<summary><strong>Linux / WSL2 (Ubuntu/Debian)</strong></summary>
+
 ```bash
+# git (normalmente ya viene instalado; si no):
+sudo apt update && sudo apt install -y git build-essential pkg-config libssl-dev
+
+# Node.js 18+ (via nvm, evita permisos raros de npm global)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+
+# pnpm
+corepack enable
+
 # Rust 1.84.0+ (necesario para Soroban)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
 rustup target add wasm32v1-none   # nueva target requerida desde Rust 1.84
 
 # Stellar CLI
 curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh
+```
+</details>
 
-# Node.js 18+ (para frontend)
-# Recomendado: usar nvm
-nvm install 20
-nvm use 20
+<details>
+<summary><strong>macOS</strong></summary>
 
+```bash
+# Homebrew, si no lo tienes: https://brew.sh
+brew install git node
+
+# pnpm
+corepack enable
+
+# Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
+rustup target add wasm32v1-none
+
+# Stellar CLI
+curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh
+```
+</details>
+
+```bash
 # Verificar todo
+git --version
 stellar version
 rustc --version
 node --version
+pnpm --version
 ```
+
+Si algún comando "no se encuentra" tras instalarlo, cierra y vuelve a abrir la terminal (o corre `source ~/.bashrc` / `source ~/.zshrc`) para que tome el `PATH` actualizado.
 
 > **Haz esto antes de empezar a codear.** La compilación inicial de Rust y la instalación de Stellar CLI pueden tomar 10-15 minutos dependiendo de tu conexión.
 
@@ -397,7 +438,14 @@ Asegúrate de usar versiones compatibles entre sí:
 }
 ```
 
-### 6. Contrato no encontrado tras deploy
+### 6. Errores de instalación de herramientas
+
+- **`error: target 'wasm32v1-none' not found`** (o similar al compilar): falta el target de Rust. Corre `rustup target add wasm32v1-none`.
+- **`stellar: command not found`** tras instalarlo: asegúrate de que `~/.cargo/bin` esté en tu `PATH` (`source "$HOME/.cargo/env"`) y abre una terminal nueva.
+- **`pnpm: command not found`**: corre `corepack enable` (viene con Node 16.9+); si sigue sin aparecer, `npm i -g pnpm`.
+- **En Windows, comandos que fallan de formas raras** (paths, permisos, compilación de Rust): usa WSL2 en vez de PowerShell/CMD — ver la sección de Pre-requisitos.
+
+### 7. Contrato no encontrado tras deploy
 
 **Causa:** El contract ID se perdió o el deploy falló silenciosamente.
 
@@ -426,11 +474,12 @@ NEXT_PUBLIC_CONTRACT_ID=tu-contract-id-aqui
 
 ## Checklist antes de empezar
 
+- [ ] git instalado
 - [ ] Rust 1.84+ + target `wasm32v1-none` instalado
 - [ ] Stellar CLI instalado y configurado con testnet
 - [ ] Identidad de testnet creada y fondeada con XLM
 - [ ] Freighter instalado en el navegador y configurado en testnet
-- [ ] Node.js 18+ instalado
+- [ ] Node.js 18+ con pnpm instalado (`corepack enable`)
 - [ ] Compilaste y deployaste un contrato de prueba
 - [ ] Probaste `simulateTransaction` + `sendTransaction` + polling
 - [ ] Guardaste el contract ID del contrato de prueba en `.env.local`
