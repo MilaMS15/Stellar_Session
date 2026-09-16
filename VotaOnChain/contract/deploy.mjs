@@ -9,12 +9,10 @@
  */
 
 import { readFileSync } from 'fs';
-import pkg from '@stellar/stellar-sdk';
-
-const {
+import {
   Keypair, rpc, TransactionBuilder, Networks, BASE_FEE,
-  xdr, Operation, Address, Contract, scValToNative,
-} = pkg;
+  xdr, Operation, Address, scValToNative,
+} from '@stellar/stellar-sdk';
 
 const RPC_URL = 'https://soroban-testnet.stellar.org';
 const NETWORK = Networks.TESTNET;
@@ -69,7 +67,7 @@ async function main() {
   }
 
   // 1. Subir WASM
-  console.log('\n[1/3] Subiendo WASM...');
+  console.log('\n[1/2] Subiendo WASM...');
   let cuenta = await server.getAccount(keypair.publicKey());
   const wasm = readFileSync(WASM_PATH);
 
@@ -81,16 +79,21 @@ async function main() {
   const wasmHash = uploadResult.returnValue.bytes();
   console.log(`  WASM hash: ${Buffer.from(wasmHash).toString('hex')}`);
 
-  // 2. Deploy
-  console.log('\n[2/3] Deployando contrato...');
+  // 2. Deploy + inicializar (el contrato usa __constructor: admin + options
+  // se pasan atómicamente en el mismo deploy, no en una invocación separada)
+  console.log('\n[2/2] Deployando e inicializando el contrato (admin = esta cuenta)...');
   cuenta = await server.getAccount(keypair.publicKey());
   const salt = Buffer.from(Array.from({ length: 32 }, () => Math.floor(Math.random() * 256)));
+
+  const adminScVal = new Address(keypair.publicKey()).toScVal();
+  const opcionesScVal = xdr.ScVal.scvVec(OPTIONS.map(o => xdr.ScVal.scvSymbol(o)));
 
   const deployTx = new TransactionBuilder(cuenta, { fee: BASE_FEE, networkPassphrase: NETWORK })
     .addOperation(Operation.createCustomContract({
       wasmHash,
       address: new Address(keypair.publicKey()),
       salt,
+      constructorArgs: [adminScVal, opcionesScVal],
     }))
     .setTimeout(60).build();
   const deployPrep = await simYPrep(deployTx);
@@ -103,18 +106,7 @@ async function main() {
     contractId = String(scValToNative(deployResult.returnValue));
   }
   console.log(`  Contract ID: ${contractId}`);
-
-  // 3. Inicializar
-  console.log('\n[3/3] Inicializando opciones de voto...');
-  cuenta = await server.getAccount(keypair.publicKey());
-  const contrato = new Contract(contractId);
-  const opcionesScVal = xdr.ScVal.scvVec(OPTIONS.map(o => xdr.ScVal.scvSymbol(o)));
-
-  const initTx = new TransactionBuilder(cuenta, { fee: BASE_FEE, networkPassphrase: NETWORK })
-    .addOperation(contrato.call('init', opcionesScVal))
-    .setTimeout(60).build();
-  const initPrep = await simYPrep(initTx);
-  await enviarTx(initPrep, keypair);
+  console.log(`  Admin: ${keypair.publicKey()}`);
   console.log('  Opciones:', OPTIONS.join(', '));
 
   console.log('\n✅ Deploy completado!\n');

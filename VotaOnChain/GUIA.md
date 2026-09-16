@@ -11,7 +11,7 @@ npm create vite@latest vota-onchain -- --template react-ts
 cd vota-onchain
 npm install
 npm install @stellar/stellar-sdk
-npm install @creit.tech/stellar-wallets-kit
+npx jsr add @creit-tech/stellar-wallets-kit
 npm install @neondatabase/serverless
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
@@ -40,8 +40,8 @@ En `src/index.css`:
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup target add wasm32v1-none
 
-# Soroban CLI
-cargo install --locked stellar-cli --features opt
+# Stellar CLI
+cargo install --locked stellar-cli
 ```
 
 ### 1.2 Crear el contrato
@@ -53,16 +53,19 @@ cd vota-contract
 
 Reemplaza `src/lib.rs` con el contrato del proyecto (`contract/src/lib.rs` en este repo).
 
-El contrato expone 4 funciones:
+El contrato expone estas funciones:
 
 | Función | Argumentos | Retorno | Descripción |
 |---|---|---|---|
-| `init` | `options: Vec<Symbol>` | — | Inicializa con opciones de votación |
+| `__constructor` | `admin: Address, options: Vec<Symbol>` | — | Corre una sola vez, atómicamente, al desplegar. Fija el admin y las opciones |
+| `get_admin` | — | `Address` | Retorna el admin del contrato |
 | `vote` | `voter: Address, option: Symbol` | `bool` | Registra un voto (false si ya votó) |
 | `get_votes` | — | `Map<Symbol, u32>` | Retorna todos los votos |
 | `has_voted` | `voter: Address` | `bool` | Verifica si ya votó |
 
-### 1.3 Compilar y deployar
+> El contrato usa `__constructor` en vez de un `init()` manual — así el deploy y la inicialización (admin + opciones) ocurren en la misma transacción, sin ventana entre ambos pasos en la que alguien más pueda inicializar el contrato primero.
+
+### 1.3 Compilar, deployar e inicializar
 
 ```bash
 # Compilar (genera el .wasm en target/wasm32v1-none/release/)
@@ -74,30 +77,23 @@ stellar keys generate deployer --network testnet
 # Fondear con Friendbot
 stellar keys fund deployer --network testnet
 
-# Deployar en testnet
+# Deployar en testnet — los argumentos del constructor van después de "--"
+# y quedan fijados atómicamente en el mismo deploy (deployer = admin)
 stellar contract deploy \
   --wasm target/wasm32v1-none/release/vota_onchain.wasm \
   --source deployer \
-  --network testnet
-```
-
-> Copia el **Contract ID** que imprime el deploy — se ve así: `CXXXXXXX...`
-> Lo necesitas en el paso siguiente y en el `.env.local` del frontend.
-
-### 1.4 Inicializar el contrato con las opciones
-
-```bash
-stellar contract invoke \
-  --id TU_CONTRACT_ID \
-  --source deployer \
   --network testnet \
-  -- init \
+  -- \
+  --admin deployer \
   --options '["Opcion_A","Opcion_B","Opcion_C"]'
 ```
 
+> Copia el **Contract ID** que imprime el deploy — se ve así: `CXXXXXXX...`
+> Lo necesitas en el `.env.local` del frontend.
+
 > Los IDs de opciones deben ser strings de máximo 10 caracteres (limitación del tipo `Symbol` en Soroban). Sin espacios.
 
-### 1.5 Verificar que funciona
+### 1.4 Verificar que funciona
 
 ```bash
 # Leer votos (debe retornar un mapa vacío o con ceros)
@@ -247,9 +243,9 @@ export const VOTE_OPTIONS = [
 ];
 ```
 
-**2. Al inicializar el contrato** — mismos IDs:
+**2. Al deployar el contrato** — mismos IDs como argumento del constructor:
 ```bash
--- init --options '["mi_opcion1","mi_opcion2"]'
+-- --admin deployer --options '["mi_opcion1","mi_opcion2"]'
 ```
 
 > Los IDs deben coincidir exactamente entre el contrato y el frontend.
@@ -263,12 +259,12 @@ export const VOTE_OPTIONS = [
 stellar keys fund deployer --network testnet
 ```
 
-**"Contract already initialized"**
-El contrato ya fue inicializado. Si estás en testnet, puedes deployar uno nuevo y obtener un Contract ID fresco.
+**No se puede volver a inicializar / "already initialized"**
+El contrato usa `__constructor`, que solo corre una vez, atómicamente, en el momento del deploy — no existe una forma de volver a llamarlo. Si necesitas otras opciones o otro admin, deploya un contrato nuevo (obtendrás un Contract ID distinto).
 
 **El frontend no lee los votos**
 - Verifica que `VITE_CONTRACT_ID` en `.env.local` sea el correcto
-- Confirma que el contrato fue inicializado con `init`
+- Confirma que el contrato fue deployado con `--admin` y `--options` (ver 1.3)
 - Abre la consola del browser y busca el error exacto
 
 **Freighter no conecta**

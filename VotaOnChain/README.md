@@ -32,7 +32,9 @@ Usuario → Freighter (firma) → Soroban (registra voto on-chain)
 npm install
 ```
 
-### 2. Desplegar el contrato Soroban
+### 2. Desplegar e inicializar el contrato Soroban
+
+El contrato usa `__constructor` — el deploy y la inicialización (admin + opciones) ocurren en una sola transacción atómica, no en pasos separados.
 
 ```bash
 cd contract
@@ -40,26 +42,18 @@ cd contract
 # Compilar (requiere rustup target add wasm32v1-none)
 stellar contract build
 
-# Deploy en testnet
+# Deploy en testnet — los argumentos del constructor van después de "--"
 stellar contract deploy \
   --wasm target/wasm32v1-none/release/vota_onchain.wasm \
   --network testnet \
-  --source mi-wallet
+  --source mi-wallet \
+  -- \
+  --admin mi-wallet \
+  --options '["Opcion_A","Opcion_B","Opcion_C"]'
 # → Anota el Contract ID que imprime este comando
 ```
 
-### 3. Inicializar el contrato
-
-```bash
-stellar contract invoke \
-  --id TU_CONTRACT_ID \
-  --source mi-wallet \
-  --network testnet \
-  -- init \
-  --options '["Opcion_A","Opcion_B","Opcion_C"]'
-```
-
-### 4. Configurar `.env.local`
+### 3. Configurar `.env.local`
 
 ```bash
 cp .env.example .env.local
@@ -72,7 +66,7 @@ VITE_DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
 
 > **Neon es opcional.** La dApp funciona sin él — los votos se leen directamente desde Soroban.
 
-### 5. Correr el proyecto
+### 4. Correr el proyecto
 
 ```bash
 npm run dev
@@ -109,7 +103,7 @@ VotaOnChain/
 ├── contract/
 │   ├── .cargo/config.toml   # target = wasm32v1-none
 │   ├── Cargo.toml
-│   └── src/lib.rs           # contrato + 4 tests
+│   └── src/lib.rs           # contrato + 6 tests
 └── src/
     ├── components/
     │   ├── WalletConnect.tsx
@@ -134,10 +128,10 @@ export const VOTE_OPTIONS = [
 ];
 ```
 
-Y al inicializar el contrato, usa los mismos IDs:
+Y al deployar el contrato, pasa los mismos IDs como argumento del constructor:
 
 ```bash
--- init --options '["opcion_a","opcion_b","opcion_c"]'
+-- --admin mi-wallet --options '["opcion_a","opcion_b","opcion_c"]'
 ```
 
 Los IDs deben ser strings de máximo 10 caracteres (limitación del tipo `Symbol` en Soroban).
