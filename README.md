@@ -3,7 +3,7 @@
 
 Guía práctica para desarrolladores en Perú que quieren empezar a construir sobre **Stellar** — sin importar tu experiencia previa con la red, acceso a herramientas de AI pagas, o el hardware que tengas.
 
-Nació como material de apoyo para el Buildathon Ethereum Lima × Stellar (mayo 2026), organizado por BAF y el programa StarMaker en colaboración con Ethereum Lima. Ese evento ya terminó, pero la guía sigue viva: la mantenemos como punto de entrada general para cualquier builder peruano que quiera iniciar en el ecosistema Stellar.
+Material de apoyo impulsado por ambassadors del Stellar Ambassador Program (SAP) respaldado por Blockchain Acceleration Foundation (BAF). Lo mantenemos como punto de entrada general para cualquier builder peruano que quiera iniciar en el ecosistema Stellar.
 
 ---
 
@@ -109,15 +109,9 @@ A diferencia de otras guías enfocadas en SPEI (México) o PIX (Brasil), esta se
 
 ---
 
-## Origen
-
-Nació como material de apoyo para el **Buildathon Ethereum Lima × Stellar** — armada por **Ethereum Lima · StarMaker by BAF · Stellar · Minted In Peru**. Hoy la mantenemos como guía general y abierta para la comunidad builder de Stellar en Perú.
-
----
-
 ## Comunidad
 
-¿Preguntas, dudas, o querés conectar con otros builders de Stellar en Perú? Únete al [grupo de WhatsApp](https://chat.whatsapp.com/JB5clEPH9uK2iwzeHkMPOJ).
+¿Preguntas, dudas, o querés conectar con otros builders de Stellar en Perú? Únete al [grupo de WhatsApp](https://chat.whatsapp.com/Hu4Fn4rfpZzDsqyMoeFRvJ).
 
 ---
 
