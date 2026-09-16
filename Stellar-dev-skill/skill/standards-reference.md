@@ -64,6 +64,7 @@ console.log(`1000 PEN = ${cotizacion.buy_amount} USDC, expira ${cotizacion.expir
 | [CAP-0058](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0058.md) | Constructores (`__constructor`) |
 | [CAP-0059](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0059.md) | Primitivas BLS12-381 — **disponible**, habilita verificación Groth16 on-chain (ver [zk-proofs.md](zk-proofs.md)) |
 | [CAP-0067](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0067.md) | Mejoras de protocolo/runtime, incluye cambios al modelo de assets/eventos |
+| [CAP-0079](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0079.md) | Host functions para conversión de muxed-address strkey (`G.../M.../C...`) — **implementado** en Protocol 26 |
 
 ### Draft / status-sensible
 
@@ -71,7 +72,6 @@ console.log(`1000 PEN = ${cotizacion.buy_amount} USDC, expira ${cotizacion.expir
 |---|---|
 | [CAP-0074](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0074.md) | Host functions BN254 (habilitaría verificación de proofs Circom/Noir por defecto y RISC Zero) |
 | [CAP-0075](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0075.md) | Host functions Poseidon/Poseidon2 |
-| [CAP-0079](https://github.com/stellar/stellar-protocol/blob/master/core/cap-0079.md) | Conversión de muxed-address strkey |
 
 Usa siempre el campo de estado del preámbulo del CAP como fuente de verdad de si algo está listo para producción — no asumas que un CAP draft está activo en la red que estás usando.
 

@@ -151,7 +151,7 @@ Servidor MCP remoto que busca en documentación de Stellar y datos del ecosistem
 - **Conectar en Claude Code:** `claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`
 
 ### Stellar Skills (skills.stellar.org)
-Directorio oficial de skills modulares para agentes de AI — smart contracts, dApp, assets, data, agentic payments, zk-proofs, standards. Ver [resources.md](resources.md) para instalación.
+Directorio oficial de skills modulares para agentes de AI — smart contracts, dApp, assets, data, agentic payments, cross-chain, zk-proofs, standards. Ver [resources.md](resources.md) para instalación.
 
 ---
 

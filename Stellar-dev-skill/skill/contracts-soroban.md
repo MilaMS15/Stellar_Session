@@ -19,11 +19,11 @@ rustup target add wasm32v1-none     # una vez por toolchain
 crate-type = ["lib", "cdylib"]   # "lib" es necesario para tests y fuzzing
 
 [dependencies]
-soroban-sdk = "23"   # sigue la versión del protocolo — revisa crates.io/crates/soroban-sdk
+soroban-sdk = "26"   # sigue la versión del protocolo — revisa crates.io/crates/soroban-sdk
                       # para la última. Mainnet suele ir un protocolo detrás de testnet.
 
 [dev-dependencies]
-soroban-sdk = { version = "23", features = ["testutils"] }
+soroban-sdk = { version = "26", features = ["testutils"] }
 
 [profile.release]
 opt-level = "z"

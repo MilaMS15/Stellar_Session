@@ -2,7 +2,7 @@
 
 Skill de AI para desarrollo moderno en Stellar, con mejores prácticas actuales.
 
-Inspirado originalmente en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill), con ejemplos y contexto relevante para Perú y LATAM. Ese repo ha evolucionado bastante desde entonces — hoy es la fuente oficial de [skills.stellar.org](https://skills.stellar.org), con una estructura distinta (`skills/` modular por tema: smart-contracts, dapp, assets, data, agentic-payments, zk-proofs, standards) e instalación vía plugin marketplace de Claude Code. Si buscas el contenido más actualizado y mantenido por SDF, instala ese directamente — ver [Recursos.md](../Recursos.md#building-with-ai--contexto-para-tu-agente) en la raíz de este repo. Este skill sigue vivo como complemento con contexto peruano, no como espejo del oficial.
+Inspirado originalmente en [stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill), con ejemplos y contexto relevante para Perú y LATAM. Ese repo ha evolucionado bastante desde entonces — hoy es la fuente oficial de [skills.stellar.org](https://skills.stellar.org), con una estructura distinta (`skills/` modular por tema: smart-contracts, dapp, assets, data, agentic-payments, cross-chain, zk-proofs, standards) e instalación vía plugin marketplace de Claude Code. Si buscas el contenido más actualizado y mantenido por SDF, instala ese directamente — ver [Recursos.md](../Recursos.md#building-with-ai--contexto-para-tu-agente) en la raíz de este repo. Este skill sigue vivo como complemento con contexto peruano, no como espejo del oficial.
 
 > **Nota:** Este skill forma parte de [Stellar Build Peru](https://github.com/Stellar-Build-PE) — guía comunitaria para builders de Stellar en Perú.
 
